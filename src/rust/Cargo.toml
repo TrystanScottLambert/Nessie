@@ -1,0 +1,12 @@
+[package]
+name = 'Nessie'
+version = '0.1.0'
+edition = '2021'
+
+[lib]
+crate-type = [ 'staticlib' ]
+name = 'Nessie'
+
+[dependencies]
+extendr-api = '*'
+ndarray = "0.16.1"
