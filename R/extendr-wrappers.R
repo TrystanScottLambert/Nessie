@@ -10,9 +10,19 @@
 #' @useDynLib Nessie, .registration = TRUE
 NULL
 
-#' Return string `"Hello world!"` to R.
+#' Calculates multiple comoving distances for multiple redshifts.
+#' @param redshift_array an array of multiple redshift values.
+#' @param omega_m Mass density (often 0.3 in LCDM)
+#' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM)
+#' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM)
+#' @param hubble_constant H0 = 100 * h
+#' @return multiple comoving distance in Mpc.
 #' @export
-hello_world <- function() .Call(wrap__hello_world)
+comoving_distances_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__comoving_distances_at_z, redshift_array, omega_m, omega_k, omega_l, h0)
+
+#' redshift at some given comoving distances in Mpc
+#' @export
+z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .Call(wrap__z_at_comoving_distances, distances, omega_m, omega_k, omega_l, h0)
 
 
 # nolint end
