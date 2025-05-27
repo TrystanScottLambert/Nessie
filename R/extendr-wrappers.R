@@ -24,5 +24,18 @@ comoving_distances_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h
 #' @export
 z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .Call(wrap__z_at_comoving_distances, distances, omega_m, omega_k, omega_l, h0)
 
+#' finding the links between all galaxies
+#' @description
+#' `fof_links` will determine all connections between galaxies in a survey and return the pairs.
+#' @param ra Array of right ascension values.
+#' @param dec Array of declination values.
+#' @param comoving_distances Array of comoving distances in Mpc. 
+#' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
+#' @param b0 The plane-of-sky constant to be scaled. 
+#' @param r0 The line-of-sight constant to be scaled.
+#' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
+#' @export
+fof_links <- function(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0) .Call(wrap__fof_links, ra_array, dec_array, comoving_distances, linking_lengths, b0, r0)
+
 
 # nolint end
