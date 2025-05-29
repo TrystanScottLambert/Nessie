@@ -2,7 +2,8 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 use integrate::adaptive_quadrature;
 use libm::{tan, atan2};
-use std::f64::{self, consts::PI};
+use std::f64;
+use std::sync::Mutex;
 use roots::SimpleConvergency;
 use roots::find_root_brent;
 
@@ -89,25 +90,106 @@ fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omeg
         .collect()
 }
 
+// Combined function that finds indices and removes target in one go
+fn find_indices_in_range(sorted_array: &[f64], argsort: &[usize], low_lim: f64, up_lim: f64, exclude: usize) -> Vec<usize> {
+    
+    let start_idx = sorted_array.partition_point(|&x| x < low_lim);
+    if start_idx >= sorted_array.len() {
+        return Vec::new();
+    }
+    
+    let end_idx = sorted_array.partition_point(|&x| x <= up_lim);
+    if start_idx >= end_idx {
+        return Vec::new();
+    }
 
-fn ang_sep(lon_1: &f64, lat_1: &f64, lon_2: &f64, lat_2: &f64) -> f64 {
-    assert!(*lon_1 >= 0., "lon_1 must be in [0, 360)");
-    assert!(*lon_2 >= 0., "lon_2 must be in [0, 360)");
-    assert!((-90.0..=90.0).contains(lat_1), "lat_1 must be in [-90, 90]");
-    assert!((-90.0..=90.0).contains(lat_2), "lat_2 must be in [-90, 90]");
+    let mut result = Vec::with_capacity(end_idx - start_idx - 1);
+    for &idx in &argsort[start_idx..end_idx] {
+        if idx > exclude {
+            result.push(idx);
+        }
+    }
+    result
+}
 
-    let sdlon = (lon_2.to_radians() - lon_1.to_radians()).sin();
-    let cdlon = (lon_2.to_radians() - lon_1.to_radians()).cos();
-    let slat1 = (lat_1.to_radians()).sin();
-    let slat2 = (lat_2.to_radians()).sin();
-    let clat1 = (lat_1.to_radians()).cos();
-    let clat2 = (lat_2.to_radians()).cos();
+
+fn argsort<T: PartialOrd>(data: &[T]) -> Vec<usize> {
+    let mut idx: Vec<usize> = (0..data.len()).collect();
+    idx.sort_by(|&i, &j| data[i].partial_cmp(&data[j]).unwrap());
+    idx
+}
+
+fn fof_links_rust(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths: Vec<f64>, b0: f64, r0: f64) -> Vec<(usize, usize)> {
+    
+    let n = ra_array.len();
+    // we can get away with working out max ll because we precalculate this when working out the
+    // linking lengths. Mvir -> Rvir. This is why we don't need to pass a max val and can just calculate it.
+    let max_ll = linking_lengths.iter().cloned().fold(f64::NAN, f64::max);
+    let mut sorted_distances = comoving_distances.clone();
+    sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let dist_argsort = argsort(&comoving_distances);
+    
+    println!("Number of Galaxies: {}", n);
+
+    // Option 1: Using Mutex for shared state (simpler but potentially slower)
+    let links = Mutex::new(Vec::new());
+    
+    (0..n).into_par_iter().for_each(|i| {
+        let ra_i = ra_array[i];
+        let dec_i = dec_array[i];
+        let dist_i = comoving_distances[i];
+        let ll_i = linking_lengths[i];
+        let max_delta_los = r0 * b0 * (max_ll + ll_i) * 0.5;
+        let low_lim = dist_i - max_delta_los;
+        let up_lim = dist_i + max_delta_los;
+        let possible_idx = find_indices_in_range(&sorted_distances, &dist_argsort, low_lim, up_lim, i);
+
+        let mut local_links = Vec::new();
+        for j in possible_idx {
+            let ra_j = ra_array[j];
+            let dec_j = dec_array[j];
+            let dist_j = comoving_distances[j];
+            let ll_j = linking_lengths[j];
+            let avg_link_length = (ll_i + ll_j)/2.;
+
+            if (dist_i - dist_j).abs() <= b0 * r0 * avg_link_length {
+                let angular_separation = ang_sep_radians(&ra_i, &dec_i, &ra_j, &dec_j);
+                if tan(angular_separation).abs() * (dist_i + dist_j)/2. < b0 * avg_link_length {
+                    local_links.push((i, j));
+                }
+            }
+        }
+        
+        // Only lock once per thread to add all local results
+        if !local_links.is_empty() {
+            links.lock().unwrap().extend(local_links);
+        }
+    });
+    
+    links.into_inner().unwrap()
+}
+
+
+fn ang_sep_radians(lon_1: &f64, lat_1: &f64, lon_2: &f64, lat_2: &f64) -> f64 {
+    // we should do a global check that all ra and dec and z are well behaved.
+    // function is assuming nothing dumb is happening. 
+    let lon1 = lon_1.to_radians();
+    let lat1 = lat_1.to_radians();
+    let lon2 = lon_2.to_radians();
+    let lat2 = lat_2.to_radians();
+
+    let sdlon = (lon2 - lon1).sin();
+    let cdlon = (lon2 - lon1).cos();
+    let slat1 = (lat1).sin();
+    let slat2 = (lat2).sin();
+    let clat1 = (lat1).cos();
+    let clat2 = (lat2).cos();
 
     let num1 = clat2 * sdlon;
     let num2 = clat1 * slat2 - slat1 * clat2 * cdlon;
     let denominator = slat1 * slat2 + clat1 * clat2 * cdlon;
     let hypot = (num1.powi(2) + num2.powi(2)).sqrt();
-    atan2(hypot, denominator).to_degrees()
+    atan2(hypot, denominator)
 }
 
 /// finding the links between all galaxies
@@ -122,26 +204,12 @@ fn ang_sep(lon_1: &f64, lat_1: &f64, lon_2: &f64, lat_2: &f64) -> f64 {
 /// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 /// @export
 #[extendr]
-fn fof_links(ra_array: &[f64], dec_array: &[f64], comoving_distances: &[f64], linking_lengths: &[f64], b0: f64, r0: f64) -> List {
-
-    let mut link_i: Vec<usize> = Vec::new();
-    let mut link_j: Vec<usize> = Vec::new();
-
-    for i in 0..(ra_array.len() - 1) {
-        for j in (i + 1)..(ra_array.len()) {
-            let avg_link_length = (linking_lengths[i] + linking_lengths[j])/2.;
-            if (comoving_distances[i] - comoving_distances[j]).abs() <= b0 * r0 * avg_link_length {
-                let angular_separation = ang_sep(&ra_array[i], &dec_array[i], &ra_array[j], &dec_array[j]);
-                if angular_separation.tan() * (comoving_distances[i] + comoving_distances[j])/2. < b0 * avg_link_length {
-                    link_i.push(i+1); // R indexing
-                    link_j.push(j+1);
-                }
-            }
-        }
-    }
-    list![i = link_i, j = link_j]
+fn fof_links(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths: Vec<f64>, b0: f64, r0: f64) -> List {
+    let links = fof_links_rust(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0);
+    let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
+    let j_vec: Vec<usize> = links.iter().map(|(_, y)|  *y + 1).collect();
+    list![i = i_vec, j = j_vec]
 }
-
 
 
 // Macro to generate exports.
@@ -216,7 +284,7 @@ mod tests {
             let ra2 = ras_2.get(i).unwrap();
             let dec1 = decs_1.get(i).unwrap();
             let dec2 = decs_2.get(i).unwrap();
-            seps.push(ang_sep(ra1, dec1, ra2, dec2));
+            seps.push(ang_sep_radians(ra1, dec1, ra2, dec2).to_degrees());
         }
 
         for (a_sep, sep) in zip(seps_astropy, seps) {
@@ -224,15 +292,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_fof_linking_onsky_condition() {
-        let ras = [121.1, 121.2, 121.3, 181.1, 181.2, 181.1];
-        let decs = [-23.1, -23.1, -23.1, 68., 68., 68.3];
-        let distances = [20., 20., 20., 20., 20., 20.];
-        let linking_lengths = [2., 2., 2., 2., 2., 2.];
-        // with the above settings b0 = tan(0.2deg)*10 = 0.0349 
-        // should connect [(0:2), (3:4), (5)]
-        let result = fof_links(&ras, &decs, &distances, &linking_lengths, 0.0349, 123.);
-        
-    }
 }

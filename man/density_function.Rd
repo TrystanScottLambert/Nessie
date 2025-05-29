@@ -33,7 +33,7 @@ This is a required argument for the FoF algoritm
 }
 \details{
 The n(z) is approximated from a given array of redshift values. These values can be generated
-in anyway. In the simpliest case this can just be the redshifts of the redshift survey.
+in any way. In the simpliest case this can just be the redshifts of the redshift survey.
 More approriate methods should be used though. The Probability Distribution function is then
 estimated and integrated over several bins. The total running density is simply the total counts
 in a bin multipled by the PDF and divided by the running volume.
