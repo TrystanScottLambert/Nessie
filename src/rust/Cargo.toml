@@ -10,6 +10,7 @@ name = 'Nessie'
 [dependencies]
 extendr-api = '*'
 integrate = "0.1.11"
+kiddo = "5.0.3"
 libm = "0.2.15"
 ndarray = "0.16.1"
 rayon = "1.10.0"

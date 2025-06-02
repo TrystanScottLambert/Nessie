@@ -1,8 +1,12 @@
 use extendr_api::prelude::*;
+use kiddo::KdTree;
+use kiddo::SquaredEuclidean;
 use rayon::prelude::*;
 use integrate::adaptive_quadrature;
 use libm::{tan, atan2};
+use std::collections::HashSet;
 use std::f64;
+use std::iter::zip;
 use std::sync::Mutex;
 use roots::SimpleConvergency;
 use roots::find_root_brent;
@@ -119,7 +123,7 @@ fn argsort<T: PartialOrd>(data: &[T]) -> Vec<usize> {
     idx
 }
 
-fn fof_links_rust(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths: Vec<f64>, b0: f64, r0: f64) -> Vec<(usize, usize)> {
+fn fof_links_rust_old(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths: Vec<f64>, b0: f64, r0: f64) -> Vec<(usize, usize)> {
     
     let n = ra_array.len();
     // we can get away with working out max ll because we precalculate this when working out the
@@ -128,8 +132,6 @@ fn fof_links_rust(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: V
     let mut sorted_distances = comoving_distances.clone();
     sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let dist_argsort = argsort(&comoving_distances);
-    
-    println!("Number of Galaxies: {}", n);
 
     // Option 1: Using Mutex for shared state (simpler but potentially slower)
     let links = Mutex::new(Vec::new());
@@ -170,6 +172,158 @@ fn fof_links_rust(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: V
 }
 
 
+
+#[derive(Debug, Clone, Copy)]
+pub struct SkyCoord {
+    pub ra: f64,  // Right Ascension in degrees
+    pub dec: f64, // Declination in degrees
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CartesianCoord {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl SkyCoord {
+    /// Create a new SkyCoord from RA/DEC in degrees
+    pub fn new(ra_deg: f64, dec_deg: f64) -> Self {
+        Self {
+            ra: ra_deg,
+            dec: dec_deg,
+        }
+    }
+
+    /// Convert to unit sphere Cartesian coordinates (x, y, z)
+    pub fn to_cartesian(&self) -> CartesianCoord {
+        let ra_rad = self.ra.to_radians();
+        let dec_rad = self.dec.to_radians();
+        let cos_dec = dec_rad.cos();
+        
+        CartesianCoord {
+            x: cos_dec * ra_rad.cos(),
+            y: cos_dec * ra_rad.sin(),
+            z: dec_rad.sin(),
+        }
+    }
+}
+
+
+/// A catalog with a pre-built KD-tree for efficient searching
+pub struct SkyCatalog {
+    coords: Vec<SkyCoord>,
+    tree: KdTree<f64, 3>,
+}
+
+impl SkyCatalog {
+    /// Create a new catalog from sky coordinates
+    pub fn new(ra_array_deg: Vec<f64>, dec_array_deg: Vec<f64>) -> Self {
+        let mut coords = Vec::new();
+        for (ra, dec) in zip(ra_array_deg, dec_array_deg) {
+            coords.push(SkyCoord::new(ra, dec));
+        }
+
+        let mut tree = KdTree::new();
+        
+        for (i, coord) in coords.iter().enumerate() {
+            let cart = coord.to_cartesian();
+            tree.add(&[cart.x, cart.y, cart.z], i as u64);
+        }
+        
+        Self { coords, tree }
+    }
+
+    /// Search for all coordinates within a given angular distance of a specific coordinate
+    /// 
+    /// # Arguments
+    /// * `index` - Index of the coordinate to search around
+    /// * `radius_deg` - Search radius in degrees
+    /// 
+    /// # Returns
+    /// * Vector of indices of coordinates within the search radius (excluding the query coordinate itself)
+    pub fn search_around(&self, index: usize, radius_deg: f64) -> Vec<usize> {
+        let query_coord = &self.coords[index];
+        let cart = query_coord.to_cartesian();
+        let query_point = [cart.x, cart.y, cart.z];
+        
+        // Convert angular radius to chord distance
+        let radius_rad = radius_deg.to_radians();
+        let chord_radius = (2.0 * (radius_rad / 2.0).sin()).powi(2);
+        
+        // Find all points within the chord distance
+        let neighbors = self.tree.within::<SquaredEuclidean>(&query_point, chord_radius);
+        // Filter out the query point itself and return just the indices
+        neighbors
+            .into_iter()
+            .map(|neighbor| neighbor.item)
+            .filter(|&idx | idx as usize != index)
+            .map(|idx| idx as usize)
+            .collect()
+    }
+}
+
+
+fn fof_links_rust(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, plane_of_sky_linking_lengths: Vec<f64>, line_of_sight_linking_lengths: Vec<f64>) -> Vec<(usize, usize)> {
+    
+    let n = ra_array.len();
+    // we can get away with working out max ll because we precalculate this when working out the
+    // linking lengths. Mvir -> Rvir. This is why we don't need to pass a max val and can just calculate it.
+    let max_pos_ll = plane_of_sky_linking_lengths.iter().cloned().fold(f64::NAN, f64::max);
+    let max_los_ll = line_of_sight_linking_lengths.iter().cloned().fold(f64::NAN, f64::max);
+    let mut sorted_distances = comoving_distances.clone();
+    sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let dist_argsort = argsort(&comoving_distances);
+    let sky_catalog = SkyCatalog::new(ra_array.clone(), dec_array.clone());
+
+    // Option 1: Using Mutex for shared state (simpler but potentially slower)
+    let links = Mutex::new(Vec::new());
+    
+    (0..n).into_par_iter().for_each(|i| {
+        let ra_i = ra_array[i];
+        let dec_i = dec_array[i];
+        let dist_i = comoving_distances[i];
+
+        let maximum_angle_radians = ((2. * max_pos_ll)/(dist_i + sorted_distances[0])).atan();
+
+        let low_lim = dist_i - max_los_ll;
+        let up_lim = dist_i + max_los_ll;
+        let possible_los_idx = find_indices_in_range(&sorted_distances, &dist_argsort, low_lim, up_lim, i);
+        
+        let possible_pos_idx: HashSet<usize> = sky_catalog.search_around(i, maximum_angle_radians.to_degrees())
+            .into_iter()
+            .filter(|idx| idx > &i )
+            .collect();
+
+        let possible_idx: Vec<usize> = possible_los_idx
+            .into_iter()
+            .filter(|x| possible_pos_idx
+            .contains(x))
+            .collect();
+
+        let mut local_links = Vec::new();
+        for j in possible_idx {
+            let ra_j = ra_array[j];
+            let dec_j = dec_array[j];
+            let dist_j = comoving_distances[j];
+
+            if (dist_i - dist_j).abs() <= 0.5 * (line_of_sight_linking_lengths[i] + line_of_sight_linking_lengths[j]) {
+                let angular_separation = ang_sep_radians(&ra_i, &dec_i, &ra_j, &dec_j);
+                if tan(angular_separation).abs() * (dist_i + dist_j)/2. < 0.5 * (plane_of_sky_linking_lengths[i] + plane_of_sky_linking_lengths[j]) {
+                    local_links.push((i, j));
+                }
+            }
+        }
+        
+        // Only lock once per thread to add all local results
+        if !local_links.is_empty() {
+            links.lock().unwrap().extend(local_links);
+        }
+    });
+    
+    links.into_inner().unwrap()
+}
+
 fn ang_sep_radians(lon_1: &f64, lat_1: &f64, lon_2: &f64, lat_2: &f64) -> f64 {
     // we should do a global check that all ra and dec and z are well behaved.
     // function is assuming nothing dumb is happening. 
@@ -204,13 +358,114 @@ fn ang_sep_radians(lon_1: &f64, lat_1: &f64, lon_2: &f64, lat_2: &f64) -> f64 {
 /// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 /// @export
 #[extendr]
-fn fof_links(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths: Vec<f64>, b0: f64, r0: f64) -> List {
-    let links = fof_links_rust(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0);
+fn fof_links(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
+    let links = fof_links_rust(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
     let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
     let j_vec: Vec<usize> = links.iter().map(|(_, y)|  *y + 1).collect();
     list![i = i_vec, j = j_vec]
 }
 
+
+fn fof_links_brutal(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> Vec<(usize, usize)> {
+
+    let mut links: Vec<(usize, usize)> = Vec::new();
+    let n = ra_array.len();
+    for i in 0..(n - 1) {
+        for j in (i + 1)..(n) {
+            let avg_link_length = (linking_lengths_los[i] + linking_lengths_los[j])/2.;
+            if (comoving_distances[i] - comoving_distances[j]).abs() <= avg_link_length {
+                let angular_separation = ang_sep_radians(&ra_array[i], &dec_array[i], &ra_array[j], &dec_array[j]);
+                if tan(angular_separation).abs() * (comoving_distances[i] + comoving_distances[j])/2. < (linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5 {
+                    links.push((i, j));
+                }
+            }
+        }
+    }
+    links
+}
+
+/// finding the links between all galaxies in a brute force way.
+/// @description
+/// `fof_link_brutal` will determine all connections between galaxies in a survey and return the pairs.
+/// @param ra Array of right ascension values.
+/// @param dec Array of declination values.
+/// @param comoving_distances Array of comoving distances in Mpc. 
+/// @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
+/// @param b0 The plane-of-sky constant to be scaled. 
+/// @param r0 The line-of-sight constant to be scaled.
+/// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
+/// @export
+#[extendr]
+fn fof_links_brute_force(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
+    let links = fof_links_brutal(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+    let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
+    let j_vec: Vec<usize> = links.iter().map(|(_, y)|  *y + 1).collect();
+    list![i = i_vec, j = j_vec]
+}
+
+
+pub fn ffl1(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> Vec<(usize, usize)> {
+    let n = ra_array.len();
+
+    // Convert (RA, Dec, dist) to 3D Cartesian coordinates
+    let coords: Vec<[f64; 3]> = (0..n)
+        .map(|i| {
+            let ra_rad = ra_array[i].to_radians();
+            let dec_rad = dec_array[i].to_radians();
+            let x = dec_rad.cos() * ra_rad.cos();
+            let y = dec_rad.cos() * ra_rad.sin();
+            let z = dec_rad.sin();
+            [x, y, z]
+        })
+        .collect();
+    
+    let mut ind = Vec::new();
+
+    for i in 0..(n - 1) {
+        for j in (i+1)..n {
+            let ztemp = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
+            let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
+
+            if zrad <= ztemp {
+                let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
+
+                let radproj = (0..3)
+                    .map(|k| (coords[i][k] - coords[j][k]).powi(2))
+                    .sum::<f64>();
+
+                if radproj <= bgal2 {
+                    ind.push((i, j));
+                }
+            }
+        }
+    }
+    ind
+}
+
+/// finding the links between all galaxies in a brute force way.
+/// @description
+/// `fof_link_brutal` will determine all connections between galaxies in a survey and return the pairs.
+/// @param ra Array of right ascension values.
+/// @param dec Array of declination values.
+/// @param comoving_distances Array of comoving distances in Mpc. 
+/// @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
+/// @param b0 The plane-of-sky constant to be scaled. 
+/// @param r0 The line-of-sight constant to be scaled.
+/// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
+/// @export
+#[extendr]
+fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
+    let links = ffl1(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+    let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
+    let j_vec: Vec<usize> = links.iter().map(|(_, y)| *y + 1).collect();
+    list![i = i_vec, j = j_vec]
+}
 
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
@@ -220,6 +475,8 @@ extendr_module! {
     fn comoving_distances_at_z;
     fn z_at_comoving_distances;
     fn fof_links;
+    fn fof_links_brute_force;
+    fn fof_links_aaron;
 }
 
 
@@ -264,7 +521,6 @@ mod tests {
         let returned_z = z_at_comoving_distances(distances, omega_m, omega_k, omega_l, h0);
         let redshifts = vec![0.3, 0.5, 0.1, 2.];
         for (ret_z, z) in zip(returned_z, redshifts) {
-            print!("{ret_z} {z}");
             assert!((ret_z - z).abs() < 1e-5)
         }
     }

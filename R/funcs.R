@@ -22,7 +22,6 @@ create_flat_cosmology <- function(h, omega_m) {
   return(parameters)
 }
 
-
 #' Running density function estimation
 #'
 #' @description
@@ -47,6 +46,7 @@ density_function <- function(redshifts, total_counts, survey_fractional_area, co
 
     comoving_distances <- comoving_distances_at_z(redshifts, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
     max_comoving <- max(comoving_distances) + 2*binwidth # allowing a 2 binwidth grace
+    max_comoving <- 2000
     kde <- density(comoving_distances, bw = binwidth / sqrt(12), from = 0, to = max_comoving, n = N, kern = "rect")
     kde_func <- approxfun(kde$x, kde$y, rule = 2)
 
@@ -59,7 +59,6 @@ density_function <- function(redshifts, total_counts, survey_fractional_area, co
     upper_volumes <- (4 / 3) * pi * (comoving_bins + binwidth / 2)^3
     lower_volumes <- (4 / 3) * pi * (comoving_bins - binwidth / 2)^3
     running_volume <- survey_fractional_area * (upper_volumes - lower_volumes)
-
     running_density_z <- approxfun(z_at_comoving_distances(kde$x, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0), (total_counts * running_integral)/running_volume, rule=2)
     return(running_density_z)
 }
@@ -80,9 +79,9 @@ density_function <- function(redshifts, total_counts, survey_fractional_area, co
 #' @return A dataframe with galaxy ids in one column and group id in another.
 #'
 .group_graph <-  function(links){
-  group <-  igraph::components(igraph::graph_from_data_frame(links, directed=FALSE))
-  group <-  data.frame(galaxy_id = as.integer(names(group$membership)), group_id=group$membership)
-  return(group[order(group$galaxy_id),])
+  group = igraph::components(igraph::graph_from_data_frame(links, directed=FALSE))
+  group = data.frame(galaxy_id = as.integer(names(group$membership)), group_id=group$membership)
+  return(group)
 }
 
 #' Finds groups in the given redshift arrays.
@@ -92,7 +91,7 @@ density_function <- function(redshifts, total_counts, survey_fractional_area, co
 #'
 #' @details
 #' This is a helper function which first identifies the pairs of galaxies (all the friends) in the
-#' given datam and then constructs a graph and identifies the connected compoenents from these
+#' given data and then constructs a graph and identifies the connected compoenents from these
 #' pairs. This is done using two functions: `fof_links` and `.group_graph`. This function shouldn't
 #' be used by the user, who are better served using the `fof` function directly.
 #'
@@ -106,9 +105,53 @@ density_function <- function(redshifts, total_counts, survey_fractional_area, co
 #'
 #' @return Data Frame of the galaxy ids and which groups they are in.
 #'
-.find_groups <- function(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0) {
-  links <- fof_links(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0)
+.find_groups <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) {
+  links <- fof_links_aaron(ra_array, dec_array, comoving_distances,  linking_lengths_pos, linking_lengths_los)
   group <- .group_graph(links)
+  return(group)
 }
 
+#' Run the friends-of-friends algorithm
+#'
+#' @description
+#' Performs the friends-of-friends algoirhtm on the given data.
+#'
+#' @details
+#' This is the core function of the group finder and actually runs the friends-of-friends algorithm.
+#' Before running this function it is important to have the density function already calculated.
+#' This can be done by passing an array of n(z) values to the `density_function`. An array of completeness
+#' can also be passed if needed or else 100% completeness is assumed.
+#'
+#' @param b0 Plane-of-sky constant which will be scaled by the given linking lengths.
+#' @param r0 Line-of_sight constant value which will be scaled by the given linking lengths and b0.
+#' @param ras An array-like object of right ascension in decimal degrees.
+#' @param decs An array-like object of declination values in decimal degrees.
+#' @param redshifts An array-like object of comoving_distances in Mpc.
+#' @param density_function An array-like object of linking lengths for every galaxy. These are before
+#' @param cosmology A cosmology object. (can be created with `create_flat_cosmology`).
+#' @param completeness An array of equal size to the data with values between 0 and 1. Representing how
+#' complete the survey is around that particular galaxy. This will scale that galaxy's linking lengths
+#' accordingly.
+#'
+#' @return Data Frame of the galaxy ids and which groups they are in.
+#'
+fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, completeness = rep(1, length(ras))) {
+  co_dists <- comoving_distances_at_z(data$Z, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
 
+  # Calculating the plane-of-sky linking lengths
+  linking_lengths = rho_mean(data$Z)^(-1./3) * (completeness)^(-1./3)
+  gal_rad = b0 * linking_lengths
+  max_on_sky_radius = coshaloMvirToRvir(Mmax, z = data$Z, Rho="crit", cosmo$H0)
+  too_wide =  linking_lengths_pos > max_on_sky_radius
+  gal_rad[too_wide] = max_on_sky_radius[too_wide]
+  linking_lengths_pos = gal_rad/(cosmo$h * co_dists)
+
+  # Calculating the line-of-sight linking lengths
+  R = r0 * (1 + data$Z)/(sqrt(cosmo$Om0 * (1+data$Z)^3 + cosmo$OmL))
+  linking_lengths_los = (gal_rad * R)/cosmo$h
+  max_los_distances = coshaloMvirToSigma(Mmax, z= data$Z, Rho="crit", cosmo$H0) * (1+data$Z) / cosgrowH(H0=cosmo$H0, z=data$Z)
+  too_far = linking_lengths_los > max_los_distances
+  linking_lengths_los[too_far] = max_los_distances[too_far]
+
+  return(.find_groups(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los))
+}

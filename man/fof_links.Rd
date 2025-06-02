@@ -4,20 +4,26 @@
 \alias{fof_links}
 \title{finding the links between all galaxies}
 \usage{
-fof_links(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0)
+fof_links(
+  ra_array,
+  dec_array,
+  comoving_distances,
+  linking_lengths_pos,
+  linking_lengths_los
+)
 }
 \arguments{
 \item{comoving_distances}{Array of comoving distances in Mpc.}
+
+\item{ra}{Array of right ascension values.}
+
+\item{dec}{Array of declination values.}
 
 \item{linking_lengths}{An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).}
 
 \item{b0}{The plane-of-sky constant to be scaled.}
 
 \item{r0}{The line-of-sight constant to be scaled.}
-
-\item{ra}{Array of right ascension values.}
-
-\item{dec}{Array of declination values.}
 }
 \value{
 A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.

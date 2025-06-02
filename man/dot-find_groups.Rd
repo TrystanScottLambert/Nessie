@@ -4,7 +4,13 @@
 \alias{.find_groups}
 \title{Finds groups in the given redshift arrays.}
 \usage{
-.find_groups(ra_array, dec_array, comoving_distances, linking_lengths, b0, r0)
+.find_groups(
+  ra_array,
+  dec_array,
+  comoving_distances,
+  linking_lengths_pos,
+  linking_lengths_los
+)
 }
 \arguments{
 \item{ra_array}{An array-like object of right ascension in decimal degrees.}
@@ -28,7 +34,7 @@ Identifies the groups based on the given data and linking length information.
 }
 \details{
 This is a helper function which first identifies the pairs of galaxies (all the friends) in the
-given datam and then constructs a graph and identifies the connected compoenents from these
+given data and then constructs a graph and identifies the connected compoenents from these
 pairs. This is done using two functions: \code{fof_links} and \code{.group_graph}. This function shouldn't
 be used by the user, who are better served using the \code{fof} function directly.
 }

@@ -22,10 +22,10 @@ test_that("density function works", {
   rho_mean <-  density_function(points, N, fractional_area, cosmo)
 
   redshifts <- c(0., 0.1, 0.3, 0.21)
-  answers <- c(5.386810e-15, 3.898299e-18, 4.453681e-19, 6.780105e-02)
+  answers <- c(5.386810e-15, 3.898299e-18, 4.453681e-19, 6.7810080e-02)
 
   result = rho_mean(redshifts)
-  expect_equal(answers, result)
+  expect_equal(result, answers)
 })
 
 test_that("Group finding graph method is working correctly.", {
@@ -34,10 +34,10 @@ test_that("Group finding graph method is working correctly.", {
   decs <-  c(-23.1, -23.1, -23.1, 68., 68., -30)
   distances <-  c(20., 20., 20., 100., 100., 200.)
   linking_lengths <-  c(2., 2., 2., 2., 2., 2.)
-  b0 = 0.0349
-  r0 = 0.4
+  b0 = rep(0.0349, length(ras))
+  r0 = rep(0.4, length(ras))
 
-  result = .find_groups(ras, decs, distances, linking_lengths, b0, r0)
+  result = .find_groups(ras, decs, distances, b0, r0)
   expect_equal(result$galaxy_id, c(1, 2, 3, 4, 5))
   expect_equal(result$group_id, c(1, 1, 1, 2, 2))
 })
