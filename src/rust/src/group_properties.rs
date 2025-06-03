@@ -1,7 +1,10 @@
 use std::{f64::consts::PI, iter::zip};
 use stats::{mean, median};
 
-pub const SPEED_OF_LIGHT: f64 = 299_792.458; // km/s
+use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian,convert_cartesian_to_equitorial};
+use crate::constants::SPEED_OF_LIGHT;
+use crate::cosmology_funcs::{distance_modulus};
+
 
 // sigma error would be in km/s. 
 #[allow(dead_code)]
@@ -29,6 +32,64 @@ pub fn velocity_dispersion_gapper(group_redshifts: Vec<f64>, group_redshifts_err
     (dispersion, sigma_err_squared.sqrt())
 }
 
+
+
+fn calculate_iterative_center(ra_group: Vec<f64>, dec_group: Vec<f64>, redshift_group: Vec<f64>, magnitudes_group: Vec<f64>,  omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> (f64, f64) {
+    
+    let absolute_magnitudes: Vec<f64> = zip(magnitudes_group, redshift_group)
+        .map(|(mag, z)| mag - distance_modulus(z, omega_m, omega_k, omega_l, h0))
+        .collect();
+    let coords_cartesian: Vec<[f64; 3]> = zip(ra_group, dec_group)
+        .map(|(ra, dec)| convert_equitorial_to_cartesian(&ra, &dec))
+        .collect();
+    let flux: Vec<f64> = absolute_magnitudes
+        .iter()
+        .map(|mag| 10_f64.powf(-0.4 * mag))
+        .collect();
+
+    let mut temp_flux = flux.clone();
+    let mut temp_coords = coords_cartesian.clone();
+
+    while temp_flux.len() > 2 {
+        let flux_sum: f64 = temp_flux.iter().cloned().sum();
+
+        let center: [f64; 3] = (0..3).map(|i| {
+            temp_coords.iter().zip(temp_flux.iter())
+                .map(|(coord, &f)| coord[i] * f).sum::<f64>() / flux_sum
+        }).collect::<Vec<f64>>().try_into().unwrap();
+
+        let distances: Vec<f64> = temp_coords.iter()
+            .map(|coord| {
+            ((coord[0] - center[0]).powi(2) + 
+            (coord[1] - center[1]).powi(2) +
+            (coord[2] - center[2]).powi(2)).sqrt()
+            }).collect();
+
+        if let Some((max_idx, _)) = distances.iter().enumerate().max_by(|a, b| a.1.partial_cmp(b.1).unwrap()) {
+            temp_coords.remove(max_idx);
+            temp_flux.remove(max_idx);
+        } else {
+            break;
+        }
+    }
+
+    let max_flux_idx = temp_flux
+        .iter()
+        .enumerate()
+        .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+        .map(|(i, _)| i)
+        .unwrap();
+
+    let final_cartesian = temp_coords[max_flux_idx];
+
+    // Convert back to spherical RA/Dec (in degrees)
+    let center = convert_cartesian_to_equitorial(&final_cartesian[0], &final_cartesian[1], &final_cartesian[2]);
+    let wrapped_ra = if center[0] < 0.0 { center[0] + 360.0 } else { center[0] };
+
+    (wrapped_ra, center[1])
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -40,5 +101,34 @@ mod tests {
         let result = velocity_dispersion_gapper(redshifts, err);
         assert_eq!(result.0, 35908.750028805);
         assert_eq!(result.1, 5.70087712549569);
+    }
+
+
+    #[test]
+    fn test_bright_central_galaxy_dominates_center() {
+        let ra_group = vec![180.0, 179.0, 181.0, 180.0];
+        let dec_group = vec![0.0, 1.0, -1.0, 0.0];
+        let redshift_group = vec![0.1; 4];
+        let magnitudes_group = vec![12.0, 18.0, 18.0, 18.0]; // central galaxy is much brighter
+
+        let omega_m = 0.3;
+        let omega_k = 0.0;
+        let omega_l = 0.7;
+        let h0 = 70.0;
+
+        let (ra, dec) = calculate_iterative_center(
+            ra_group,
+            dec_group,
+            redshift_group,
+            magnitudes_group,
+            omega_m,
+            omega_k,
+            omega_l,
+            h0
+        );
+
+        // RA should be close to 180.0 and Dec to 0.0 (within ~0.01 deg)
+        assert!((ra - 180.0).abs() < 0.01, "RA deviated too far: {}", ra);
+        assert!(dec.abs() < 0.01, "Dec deviated too far: {}", dec);
     }
 }

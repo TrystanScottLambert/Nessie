@@ -1,0 +1,1 @@
+pub const SPEED_OF_LIGHT: f64 = 299_792.458; // km/s
