@@ -6,7 +6,9 @@ use std::f64;
 pub mod group_properties;
 pub mod spherical_trig_funcs;
 pub mod cosmology_funcs;
+pub mod helper_funcs;
 pub mod constants;
+
 use crate::cosmology_funcs::{comoving_distance, inverse_codist};
 use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian};
 

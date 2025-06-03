@@ -1,13 +1,13 @@
 use std::{f64::consts::PI, iter::zip};
 use stats::{mean, median};
 
-use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian,convert_cartesian_to_equitorial};
+use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian,convert_cartesian_to_equitorial, convert_equitorial_to_cartesian_scaled, euclidean_distance_3d};
 use crate::constants::SPEED_OF_LIGHT;
 use crate::cosmology_funcs::{distance_modulus};
+use crate::helper_funcs::quantile_interpolated;
 
 
 // sigma error would be in km/s. 
-#[allow(dead_code)]
 pub fn velocity_dispersion_gapper(group_redshifts: Vec<f64>, group_redshifts_err: Vec<f64>) -> (f64, f64) {
     let sigma_err_squared = mean(group_redshifts_err.iter().copied());
     let median_redshift = median(group_redshifts.iter().copied()).unwrap();
@@ -33,8 +33,7 @@ pub fn velocity_dispersion_gapper(group_redshifts: Vec<f64>, group_redshifts_err
 }
 
 
-
-fn calculate_iterative_center(ra_group: Vec<f64>, dec_group: Vec<f64>, redshift_group: Vec<f64>, magnitudes_group: Vec<f64>,  omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> (f64, f64) {
+pub fn calculate_iterative_center(ra_group: Vec<f64>, dec_group: Vec<f64>, redshift_group: Vec<f64>, magnitudes_group: Vec<f64>,  omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> (f64, f64) {
     
     let absolute_magnitudes: Vec<f64> = zip(magnitudes_group, redshift_group)
         .map(|(mag, z)| mag - distance_modulus(z, omega_m, omega_k, omega_l, h0))
@@ -90,6 +89,37 @@ fn calculate_iterative_center(ra_group: Vec<f64>, dec_group: Vec<f64>, redshift_
 }
 
 
+pub fn calculate_radius(
+    group_ra: Vec<f64>,
+    group_dec: Vec<f64>,
+    group_dists: Vec<f64>,
+    group_center_ra: f64,
+    group_center_dec: f64,
+    group_center_dist: f64,
+) -> [f64; 3] {
+    let center = convert_equitorial_to_cartesian_scaled(group_center_ra, group_center_dec, group_center_dist);
+
+    let mut distances: Vec<f64> = group_ra
+        .iter()
+        .zip(&group_dec)
+        .zip(&group_dists)
+        .map(|((&ra, &dec), &d)| {
+            let pos = convert_equitorial_to_cartesian_scaled(ra, dec, d);
+            euclidean_distance_3d(&pos, &center)
+        })
+        .collect();
+
+    distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!("Distances {:?}", distances);
+
+    let q50 = quantile_interpolated(&distances, 0.5);
+    let q68 = quantile_interpolated(&distances, 0.68);
+    let q100 = *distances.last().unwrap();
+
+    [q50, q68, q100]
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -128,7 +158,25 @@ mod tests {
         );
 
         // RA should be close to 180.0 and Dec to 0.0 (within ~0.01 deg)
-        assert!((ra - 180.0).abs() < 0.01, "RA deviated too far: {}", ra);
-        assert!(dec.abs() < 0.01, "Dec deviated too far: {}", dec);
+        assert!((ra - 180.0).abs() < 1e-6, "RA deviated too far: {}", ra);
+        assert!(dec.abs() < 1e-6, "Dec deviated too far: {}", dec);
+    }
+
+
+    #[test]
+    fn comparing_radii_to_r() {
+        let group_ra = 23.;
+        let group_dec = -23.;
+        let group_dist = 20.;
+
+        let group_ras = vec![23., 23.2, 22.9, 24.0];
+        let group_decs = vec![-23., -23.2, -23.2, -23.];
+        let group_dists = vec![20., 20., 20., 20.];
+
+        let answer =  [0.08584888, 0.10391348, 0.32131273];
+        let result = calculate_radius(group_ras, group_decs, group_dists, group_ra, group_dec, group_dist);
+        for (r, a) in zip(result, answer) {
+            assert!((r - a).abs() < 1e-6)
+        }
     }
 }

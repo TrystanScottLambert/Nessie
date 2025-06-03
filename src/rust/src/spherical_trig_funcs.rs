@@ -19,3 +19,19 @@ pub fn convert_cartesian_to_equitorial(x: &f64, y: &f64, z: &f64) -> [f64; 2] {
     [ra_radian.to_degrees(), dec_radian.to_degrees()]
 }
 
+// Converts RA, Dec (degrees) and comoving distance to 3D Cartesian coordinates.
+pub fn convert_equitorial_to_cartesian_scaled(ra_deg: f64, dec_deg: f64, distance: f64) -> [f64; 3] {
+    let ra_rad = ra_deg.to_radians();
+    let dec_rad = dec_deg.to_radians();
+    let x = distance * dec_rad.cos() * ra_rad.cos();
+    let y = distance * dec_rad.cos() * ra_rad.sin();
+    let z = distance * dec_rad.sin();
+    [x, y, z]
+}
+
+// The three dimensional euclidean distance
+pub fn euclidean_distance_3d(point_1: &[f64; 3], point_2: &[f64; 3]) -> f64 {
+    ((point_1[0] - point_2[0]).powi(2) +
+    (point_1[1] - point_2[1]).powi(2) +
+    (point_1[2] - point_2[2]).powi(2)).sqrt()
+}
