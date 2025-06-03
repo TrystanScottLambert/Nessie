@@ -1,15 +1,19 @@
 use extendr_api::prelude::*;
 use kiddo::KdTree;
 use kiddo::SquaredEuclidean;
+use libm::asin;
 use rayon::prelude::*;
 use integrate::adaptive_quadrature;
 use libm::{tan, atan2};
 use std::collections::HashSet;
 use std::f64;
+
 use std::iter::zip;
 use std::sync::Mutex;
 use roots::SimpleConvergency;
 use roots::find_root_brent;
+
+mod group_properties;
 
 
 const SPEED_OF_LIGHT: f64 = 299_792.458; // km/s
@@ -403,6 +407,21 @@ fn fof_links_brute_force(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_dista
     list![i = i_vec, j = j_vec]
 }
 
+pub fn convert_equitorial_to_cartesian(ra_deg: &f64, dec_deg: &f64) -> [f64; 3] {
+    let ra_radians = ra_deg.to_radians();
+    let dec_radians = dec_deg.to_radians();
+    let x = dec_radians.cos() * ra_radians.cos();
+    let y = dec_radians.cos() * ra_radians.sin();
+    let z = dec_radians.sin();
+    [x, y, z]
+}
+
+pub fn convert_cartesian_to_equitorial(x: &f64, y: &f64, z: &f64) -> [f64; 2] {
+    let radius = (x.powi(2) + y.powi(2) + z.powi(2)).sqrt();
+    let ra_radian = atan2(*y, *x);
+    let dec_radian = asin(z/radius);
+    [ra_radian.to_degrees(), dec_radian.to_degrees()]
+}
 
 pub fn ffl1(
     ra_array: Vec<f64>,
@@ -415,14 +434,7 @@ pub fn ffl1(
 
     // Convert (RA, Dec, dist) to 3D Cartesian coordinates
     let coords: Vec<[f64; 3]> = (0..n)
-        .map(|i| {
-            let ra_rad = ra_array[i].to_radians();
-            let dec_rad = dec_array[i].to_radians();
-            let x = dec_rad.cos() * ra_rad.cos();
-            let y = dec_rad.cos() * ra_rad.sin();
-            let z = dec_rad.sin();
-            [x, y, z]
-        })
+        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
         .collect();
     
     let mut ind = Vec::new();
@@ -482,9 +494,7 @@ extendr_module! {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
-    use std::iter::zip;
 
     #[test]
     fn test_e_func_basic_lcdm() {
