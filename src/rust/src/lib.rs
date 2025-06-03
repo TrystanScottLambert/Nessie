@@ -9,7 +9,7 @@ pub mod cosmology_funcs;
 pub mod helper_funcs;
 pub mod constants;
 
-use crate::cosmology_funcs::{comoving_distance, inverse_codist};
+use crate::cosmology_funcs::Cosmology;
 use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian};
 
 
@@ -23,9 +23,10 @@ use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian};
 /// @export
 #[extendr]
 fn comoving_distances_at_z(redshift_array: Vec<f64>, omega_m:f64, omega_k:f64, omega_l:f64, h0: f64) -> Vec<f64> {
+    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
     redshift_array
         .par_iter()
-        .map(|z| comoving_distance(*z, omega_m, omega_k, omega_l, h0))
+        .map(|z| cosmo.comoving_distance(*z))
         .collect()
 }
 
@@ -34,9 +35,10 @@ fn comoving_distances_at_z(redshift_array: Vec<f64>, omega_m:f64, omega_k:f64, o
 /// @export
 #[extendr]
 fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
+    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
     distances
         .par_iter()
-        .map(|d| inverse_codist(*d, omega_m, omega_k, omega_l, h0))
+        .map(|d| cosmo.inverse_codist(*d))
         .collect()
 }
 

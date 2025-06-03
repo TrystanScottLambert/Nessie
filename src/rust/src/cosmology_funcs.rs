@@ -4,66 +4,67 @@ use libm::log10;
 use libm::sinh;
 use roots::SimpleConvergency;
 use roots::find_root_brent;
-use rayon::prelude::*;
-
 
 use crate::constants::SPEED_OF_LIGHT;
 
-pub fn e_func(z: f64, omega_m: f64, omega_k: f64, omega_l: f64) -> f64 {
-    (omega_m * (1.0 + z).powi(3) + omega_k * (1.0 + z).powi(2) + omega_l).sqrt()
+
+pub struct Cosmology {
+    pub omega_m: f64,
+    pub omega_k: f64,
+    pub omega_l: f64,
+    pub h0: f64
 }
 
-
-pub fn hubble_distance(hubble_constant: f64) -> f64 {
-    SPEED_OF_LIGHT/hubble_constant
-}
-
-
-pub fn comoving_distance(redshift: f64, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> f64 {
-    if redshift < 1e-7 {
-        return 0.;
+impl Cosmology {
+    pub fn e_func(&self, z: f64) -> f64 {
+        (self.omega_m * (1.0 + z).powi(3) + self.omega_k * (1.0 + z).powi(2) + self.omega_l).sqrt()
     }
-    let tolerance = 1e-5;
-    let min_h = 1e-7;
-    let f = |z:f64| 1./e_func(z, omega_m, omega_k, omega_l);
-    let cosmo_recession_velocity = adaptive_quadrature::adaptive_simpson_method(f, 0.0, redshift, min_h, tolerance)
-        .expect("Value too close to zero. Must be within 10e-8");
-    hubble_distance(h0) * cosmo_recession_velocity
-}
 
-
-pub fn inverse_codist(distance: f64, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> f64 {
-    let f = |z: f64| {comoving_distance(z, omega_m, omega_k, omega_l, h0) - distance};
-    let mut convergency = SimpleConvergency {eps:1e-8f64, max_iter: 30};
-    match find_root_brent(1e-9, 1200., &f, &mut convergency) {
-        Ok(t) => t,
-        Err(_error) => 0.0
+    pub fn hubble_distance(&self) -> f64 {
+        SPEED_OF_LIGHT/self.h0
     }
-}
+    
 
-#[allow(dead_code)]
-pub fn comoving_transverse_distance(redshift: f64, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> f64 {
-    let co_dist = comoving_distance(redshift, omega_m, omega_k, omega_l, h0);
-    let h_dist = hubble_distance(h0);
-
-    match omega_k {
-        val if val > 0. => {h_dist * (1./omega_k.sqrt()) * sinh(omega_k.sqrt() * (co_dist/h_dist))},
-        val if val < 0. => {h_dist * (1./omega_k.abs().sqrt()) * (omega_k.abs().sqrt() * (co_dist/h_dist)).sin()},
-        _ => co_dist
-
+    pub fn comoving_distance(&self, z: f64) -> f64 {
+        if z < 1e-7 {
+            return 0.;
+        }
+        let tolerance = 1e-5;
+        let min_h = 1e-7;
+        let f = |z:f64| 1./self.e_func(z);
+        let cosmo_recession_velocity = adaptive_quadrature::adaptive_simpson_method(f, 0.0, z, min_h, tolerance)
+            .expect("Value too close to zero. Must be within 10e-8");
+        self.hubble_distance() * cosmo_recession_velocity
     }
-}
 
-pub fn distance_modulus(redshift: f64, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> f64 {
-    let co_trans_dist = comoving_transverse_distance(redshift, omega_m, omega_k, omega_l, h0);
-    5. * log10(co_trans_dist * (1. + redshift)) + 25.
-}
 
-pub fn dist_mods(redshifts: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    redshifts
-        .par_iter()
-        .map(|z| distance_modulus(*z, omega_m, omega_l, omega_k, h0))
-        .collect()
+    pub fn inverse_codist(&self, distance: f64) -> f64 {
+        let f = |z: f64| {self.comoving_distance(z) - distance};
+        let mut convergency = SimpleConvergency {eps:1e-8f64, max_iter: 30};
+        match find_root_brent(1e-9, 1200., &f, &mut convergency) {
+            Ok(t) => t,
+            Err(_error) => 0.0
+        }
+    }
+
+    pub fn comoving_transverse_distance(&self, z: f64) -> f64 {
+        let co_dist = self.comoving_distance(z);
+        let h_dist = self.hubble_distance();
+
+        match self.omega_k {
+            val if val > 0. => {h_dist * (1./self.omega_k.sqrt()) * sinh(self.omega_k.sqrt() * (co_dist/h_dist))},
+            val if val < 0. => {h_dist * (1./self.omega_k.abs().sqrt()) * (self.omega_k.abs().sqrt() * (co_dist/h_dist)).sin()},
+            _ => co_dist
+
+        }
+    }
+
+    pub fn distance_modulus(&self, z: f64) -> f64 {
+        let co_trans_dist = self.comoving_transverse_distance(z);
+        5. * log10(co_trans_dist * (1. + z)) + 25.
+    }
+        
+
 }
 
 
@@ -75,10 +76,15 @@ mod tests {
     #[test]
     fn test_e_func_basic_lcdm() {
         let z = 0.3;
-        let omega_m = 0.3;
-        let omega_k = 0.0;
-        let omega_l = 0.7;
-        let e = e_func(z, omega_m, omega_k, omega_l);
+        let cosmo = Cosmology {
+            omega_m: 0.3,
+            omega_k: 0.,
+            omega_l: 0.7,
+            h0: 0.7
+        };
+
+        let e = cosmo.e_func(z);
+        println!("What the poes: {e}");
         assert!((e - 1.16580444329227).abs() < 1e-5);
     }
 
