@@ -15,3 +15,17 @@ pub fn quantile_interpolated(sorted: &[f64], quantile: f64) -> f64 {
         sorted[i]
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn comparing_quantile_to_r() {
+        let sorted_array = [1., 2., 3., 4., 5.];
+        assert!((quantile_interpolated(&sorted_array, 0.3) - 2.2).abs() < 1e-6);
+        assert!((quantile_interpolated(&sorted_array, 0.5) - 3.).abs() < 1e-6);
+        assert!((quantile_interpolated(&sorted_array, 0.77) - 4.08).abs() < 1e-6);
+        assert!((quantile_interpolated(&sorted_array, 1.) - 5.).abs() < 1e-6);
+    }
+}

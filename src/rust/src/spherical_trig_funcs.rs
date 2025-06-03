@@ -35,3 +35,71 @@ pub fn euclidean_distance_3d(point_1: &[f64; 3], point_2: &[f64; 3]) -> f64 {
     (point_1[1] - point_2[1]).powi(2) +
     (point_1[2] - point_2[2]).powi(2)).sqrt()
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const EPSILON: f64 = 1e-6;
+
+    #[test]
+    fn test_equatorial_to_cartesian_unit_sphere() {
+        let ra = 0.0;
+        let dec = 0.0;
+        let result = convert_equitorial_to_cartesian(&ra, &dec);
+        assert!((result[0] - 1.0).abs() < EPSILON);
+        assert!((result[1]).abs() < EPSILON);
+        assert!((result[2]).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_cartesian_to_equatorial_unit_sphere() {
+        let x = 1.0;
+        let y = 0.0;
+        let z = 0.0;
+        let result = convert_cartesian_to_equitorial(&x, &y, &z);
+        assert!((result[0] - 0.0).abs() < EPSILON); // RA
+        assert!((result[1] - 0.0).abs() < EPSILON); // Dec
+    }
+
+    #[test]
+    fn test_round_trip_conversion() {
+        let ra = 123.4;
+        let dec = -56.78;
+        let cart = convert_equitorial_to_cartesian(&ra, &dec);
+        let equi = convert_cartesian_to_equitorial(&cart[0], &cart[1], &cart[2]);
+        
+        // RA can wrap around so we normalize to [0, 360)
+        let mut ra_norm = equi[0];
+        if ra_norm < 0.0 {
+            ra_norm += 360.0;
+        }
+
+        assert!((ra_norm - ra).abs() < 1e-6);
+        assert!((equi[1] - dec).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_equatorial_to_cartesian_scaled() {
+        let ra = 0.0;
+        let dec = 0.0;
+        let distance = 100.0;
+        let result = convert_equitorial_to_cartesian_scaled(ra, dec, distance);
+        assert!((result[0] - 100.0).abs() < EPSILON);
+        assert!((result[1]).abs() < EPSILON);
+        assert!((result[2]).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_euclidean_distance_3d() {
+        let a = [1.0, 0.0, 0.0];
+        let b = [0.0, 0.0, 0.0];
+        let dist = euclidean_distance_3d(&a, &b);
+        assert!((dist - 1.0).abs() < EPSILON);
+
+        let a = [1.0, 2.0, 3.0];
+        let b = [4.0, 6.0, 3.0];
+        let dist = euclidean_distance_3d(&a, &b);
+        assert!((dist - 5.0).abs() < EPSILON);
+    }
+}
