@@ -9,15 +9,7 @@
 #' @param cosmology a Flat LCDM cosmology object. This can be generated with `create_flat_cosmology`
 #' @return Named list with group centers, radii, and multiplicity
 generate_group_catalog <- function(ra, dec, redshift, magnitudes, velocity_errors, group_ids, cosmology) {
-  create_group_catalog(
-    ra,
-    dec,
-    redshift,
-    magnitudes,
-    velocity_errors,
-    group_ids,
-    cosmology$omega_m,
-    cosmology$omega_k,
-    cosmology$omega_l,
-    cosmology$h0)
+
+  group_ids <- as.integer(group_ids) # rust expects an integer here.
+  create_group_catalog(ra, dec, redshift, magnitudes, velocity_errors, group_ids, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
 }

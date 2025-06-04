@@ -45,6 +45,7 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 
     comoving_distances <- comoving_distances_at_z(redshifts, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
     max_comoving <- max(comoving_distances) + 2*binwidth # allowing a 2 binwidth grace
+    max_comoving <- 2000
     kde <- density(comoving_distances, bw = binwidth / sqrt(12), from = 0, to = max_comoving, n = N, kern = "rect")
     kde_func <- approxfun(kde$x, kde$y, rule = 2)
 
