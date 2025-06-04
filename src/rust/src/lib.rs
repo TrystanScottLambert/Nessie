@@ -11,6 +11,7 @@ pub mod constants;
 
 use crate::cosmology_funcs::Cosmology;
 use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian};
+use crate::group_properties::GroupedGalaxyCatalog;
 
 
 /// Calculates multiple comoving distances for multiple redshifts.
@@ -82,7 +83,7 @@ pub fn ffl1(
 
 /// finding the links between all galaxies in a brute force way.
 /// @description
-/// `fof_link_brutal` will determine all connections between galaxies in a survey and return the pairs.
+/// `fof_link_aaron` will determine all connections between galaxies in a survey and return the pairs.
 /// @param ra Array of right ascension values.
 /// @param dec Array of declination values.
 /// @param comoving_distances Array of comoving distances in Mpc. 
@@ -99,6 +100,35 @@ fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: 
     list![i = i_vec, j = j_vec]
 }
 
+
+/// Creates a group catalog from the given arrays.
+/// @description
+/// This is the R wrapper for the rust functionality that builds the group catalog. There shouldn't
+/// be a need to use this in R as a more R-friendly function should be available.
+/// @param ra Array of right asscension values. 
+/// @param dec Array of declination values.
+/// @param redshift Array of redshift values.
+/// @param magnitudes Array of apparent magnitude values.
+/// @param velocity_errors Array of velocity errors. 
+/// @param group_id Array of the group ids, where -1 represents galaxies not in a group.
+/// @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
+#[extendr]
+fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, magnitudes: Vec<f64>, velocity_errors: Vec<f64>, group_ids: Vec<i32>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> List {
+    let catalog = GroupedGalaxyCatalog {ra, dec, redshift, magnitudes, velocity_errors, group_ids};
+    let cosmo = &Cosmology { omega_m, omega_k, omega_l, h0 };
+    let group_catalog = catalog.calculate_group_properties(cosmo);
+    list![
+        ra = group_catalog.ras,
+        dec = group_catalog.decs,
+        redshift = group_catalog.redshifts,
+        co_dist = group_catalog.distances,
+        r50 = group_catalog.r50s,
+        r100 = group_catalog.r100s,
+        rsigms = group_catalog.rsigmas,
+        multiplicity = group_catalog.multiplicity
+    ]
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -107,6 +137,7 @@ extendr_module! {
     fn comoving_distances_at_z;
     fn z_at_comoving_distances;
     fn fof_links_aaron;
+    fn create_group_catalog;
 }
 
 

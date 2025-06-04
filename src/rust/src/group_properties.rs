@@ -335,7 +335,6 @@ mod tests {
         }
 
         for (res_red, ans_red) in zip(result.redshifts, vec![0.2, 0.4, 0.8, 1.0]) {
-            println!("poo {res_red}, {ans_red}");
             assert!((res_red - ans_red).abs() < 1e-8);
         }
 
