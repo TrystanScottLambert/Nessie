@@ -24,35 +24,9 @@ comoving_distances_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h
 #' @export
 z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .Call(wrap__z_at_comoving_distances, distances, omega_m, omega_k, omega_l, h0)
 
-#' finding the links between all galaxies
-#' @description
-#' `fof_links` will determine all connections between galaxies in a survey and return the pairs.
-#' @param ra Array of right ascension values.
-#' @param dec Array of declination values.
-#' @param comoving_distances Array of comoving distances in Mpc. 
-#' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-#' @param b0 The plane-of-sky constant to be scaled. 
-#' @param r0 The line-of-sight constant to be scaled.
-#' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
-#' @export
-fof_links <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) .Call(wrap__fof_links, ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
-
 #' finding the links between all galaxies in a brute force way.
 #' @description
-#' `fof_link_brutal` will determine all connections between galaxies in a survey and return the pairs.
-#' @param ra Array of right ascension values.
-#' @param dec Array of declination values.
-#' @param comoving_distances Array of comoving distances in Mpc. 
-#' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-#' @param b0 The plane-of-sky constant to be scaled. 
-#' @param r0 The line-of-sight constant to be scaled.
-#' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
-#' @export
-fof_links_brute_force <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) .Call(wrap__fof_links_brute_force, ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
-
-#' finding the links between all galaxies in a brute force way.
-#' @description
-#' `fof_link_brutal` will determine all connections between galaxies in a survey and return the pairs.
+#' `fof_link_aaron` will determine all connections between galaxies in a survey and return the pairs.
 #' @param ra Array of right ascension values.
 #' @param dec Array of declination values.
 #' @param comoving_distances Array of comoving distances in Mpc. 
@@ -62,6 +36,19 @@ fof_links_brute_force <- function(ra_array, dec_array, comoving_distances, linki
 #' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 #' @export
 fof_links_aaron <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) .Call(wrap__fof_links_aaron, ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
+
+#' Creates a group catalog from the given arrays.
+#' @description
+#' This is the R wrapper for the rust functionality that builds the group catalog. There shouldn't
+#' be a need to use this in R as a more R-friendly function should be available.
+#' @param ra Array of right asscension values. 
+#' @param dec Array of declination values.
+#' @param redshift Array of redshift values.
+#' @param magnitudes Array of apparent magnitude values.
+#' @param velocity_errors Array of velocity errors. 
+#' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
+#' @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
+create_group_catalog <- function(ra, dec, redshift, magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0) .Call(wrap__create_group_catalog, ra, dec, redshift, magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0)
 
 
 # nolint end

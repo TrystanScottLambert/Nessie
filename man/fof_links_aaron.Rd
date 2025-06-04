@@ -29,5 +29,5 @@ fof_links_aaron(
 A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 }
 \description{
-\code{fof_link_brutal} will determine all connections between galaxies in a survey and return the pairs.
+\code{fof_link_aaron} will determine all connections between galaxies in a survey and return the pairs.
 }

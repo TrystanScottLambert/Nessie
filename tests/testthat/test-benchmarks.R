@@ -21,7 +21,9 @@ test_that("can do gama quickly", {
   data = data[data$Rpetro < 19.8,]
   dists = comoving_distances_at_z(data$Z, cosmo$Om0, cosmo$OmK, cosmo$OmL, cosmo$H0)
 
-  rho_mean = density_function(random_z, length(random_z)/400, g09_frac_area, cosmo_randoms)
+  rho_mean = create_density_function(random_z, length(random_z)/400, g09_frac_area, cosmo_randoms)
   groups = fof(b0, r0, data$RA, data$DEC, data$Z, rho_mean, cosmo)
+
+
 
 })
