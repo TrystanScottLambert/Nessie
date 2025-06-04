@@ -16,12 +16,12 @@ pub struct Group {
 
 impl Group {
 
-    pub fn multiplicity(&self) -> i32 {
-        self.ra_members.len() as i32
+    pub fn multiplicity(&self) -> u32 {
+        self.ra_members.len() as u32
     }
 
     pub fn median_redshift(&self) -> f64 {
-        median(self.ra_members.iter().copied()).unwrap()
+        median(self.redshift_members.iter().copied()).unwrap()
     }
 
     pub fn median_distance(&self, cosmo: &Cosmology) -> f64 {
@@ -125,7 +125,6 @@ impl Group {
             .collect();
 
         distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        println!("Distances {:?}", distances);
 
         let q50 = quantile_interpolated(&distances, 0.5);
         let q68 = quantile_interpolated(&distances, 0.68);
@@ -163,6 +162,7 @@ impl GroupedGalaxyCatalog {
         let mut r50_groups: Vec<f64> = Vec::new();
         let mut r100_groups: Vec<f64> = Vec::new();
         let mut rsigma_groups: Vec<f64> = Vec::new();
+        let mut multiplicity_groups: Vec<u32> = Vec::new();
 
 
         for id in unique_group_ids {
@@ -170,8 +170,10 @@ impl GroupedGalaxyCatalog {
                 let local_group_ids: Vec<i32> = self.group_ids
                     .clone()
                     .into_iter()
-                    .filter(|i| *i == id)
+                    .enumerate()
+                    .filter_map(|(idx, i)| if i == id { Some(idx as i32) } else {None})
                     .collect();
+
 
                 let local_ra: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.ra.get(i as usize).unwrap()).collect();
                 let local_dec: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.dec.get(i as usize).unwrap()).collect();
@@ -189,7 +191,6 @@ impl GroupedGalaxyCatalog {
 
                 let (ra_group, dec_group) = local_group.calculate_iterative_center(cosmo);
                 let z_group = local_group.median_redshift();
-                let distance_group = local_group.median_distance(cosmo);
                 let [r50_group, rsimga_group, r100_group] = local_group.calculate_radius(ra_group, dec_group, z_group, cosmo);
 
                 id_groups.push(id);
@@ -199,8 +200,8 @@ impl GroupedGalaxyCatalog {
                 r50_groups.push(r50_group);
                 r100_groups.push(r100_group);
                 rsigma_groups.push(rsimga_group);
-                distance_groups.push(distance_group);
-
+                distance_groups.push(local_group.median_distance(cosmo));
+                multiplicity_groups.push(local_group.multiplicity())
 
             }
         }
@@ -213,7 +214,8 @@ impl GroupedGalaxyCatalog {
             distances: distance_groups,
             r50s: r50_groups,
             r100s: r100_groups,
-            rsigmas: rsigma_groups
+            rsigmas: rsigma_groups,
+            multiplicity: multiplicity_groups
         }
     }
 }
@@ -226,11 +228,13 @@ pub struct GroupCatalog {
     pub distances: Vec<f64>,
     pub r50s: Vec<f64>,
     pub r100s: Vec<f64>,
-    pub rsigmas: Vec<f64>
+    pub rsigmas: Vec<f64>,
+    pub multiplicity: Vec<u32>
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     #[test]
     fn test_gapper_velocity_basic() {
@@ -301,4 +305,44 @@ mod tests {
             assert!((r - a).abs() < 1e-6)
         }
     }
+
+    #[test]
+    fn test_catalog () {
+        let cosmo = Cosmology {
+            omega_m: 0.3,
+            omega_k: 0.,
+            omega_l: 0.7,
+            h0: 0.7
+        };
+
+        // making a catalog with two groups, a binary pair, and two single values.
+        let catalog = GroupedGalaxyCatalog {
+            ra: vec![23., 23., 23., 23., 43., 43., 43., 56., 56., 90., 90., 5., 270.],
+            dec: vec![-20., -20., -20., -20., 0., 0., 0., 90., 90., 18., 18., -90., 56.],
+            redshift: vec![0.2, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, 0.8, 0.8, 1.0, 1.0, 0.5, 0.5],
+            magnitudes: vec![18.;13],
+            velocity_errors: vec![50.;13],
+            group_ids: vec![1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, -1, -1]
+        };
+
+        let result = catalog.calculate_group_properties(&cosmo);
+        for (res_dec, ans_dec) in zip(result.decs, vec![-20., 0., 90., 18.]) {
+            assert!((res_dec - ans_dec).abs() < 1e-8);
+        }
+
+        for (res_ra, ans_ra) in zip(result.ras, vec![23., 43., 56., 90.]) {
+            assert!((res_ra - ans_ra).abs() < 1e-8);
+        }
+
+        for (res_red, ans_red) in zip(result.redshifts, vec![0.2, 0.4, 0.8, 1.0]) {
+            println!("poo {res_red}, {ans_red}");
+            assert!((res_red - ans_red).abs() < 1e-8);
+        }
+
+        for (res_mult, ans_mult) in zip(result.multiplicity, vec![4, 3, 2, 2]) {
+            assert_eq!(res_mult, ans_mult);
+        }
+
+    }
+
 }
