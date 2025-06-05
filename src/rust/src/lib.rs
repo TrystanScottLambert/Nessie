@@ -113,8 +113,8 @@ fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: 
 /// @param group_id Array of the group ids, where -1 represents galaxies not in a group.
 /// @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
 #[extendr]
-fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, magnitudes: Vec<f64>, velocity_errors: Vec<f64>, group_ids: Vec<i32>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> List {
-    let catalog = GroupedGalaxyCatalog {ra, dec, redshift, magnitudes, velocity_errors, group_ids};
+fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolute_magnitudes: Vec<f64>, velocity_errors: Vec<f64>, group_ids: Vec<i32>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> List {
+    let catalog = GroupedGalaxyCatalog {ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids};
     let cosmo = &Cosmology { omega_m, omega_k, omega_l, h0 };
     let group_catalog = catalog.calculate_group_properties(cosmo);
     list![

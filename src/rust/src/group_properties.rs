@@ -10,7 +10,7 @@ pub struct Group {
     pub ra_members: Vec<f64>,
     pub dec_members: Vec<f64>,
     pub redshift_members: Vec<f64>,
-    pub magnitudes_members: Vec<f64>,
+    pub absolute_magnitude_members: Vec<f64>,
     pub velocity_errors: Vec<f64>
 }
 
@@ -52,15 +52,12 @@ impl Group {
         (dispersion, sigma_err_squared.sqrt())
     }
 
-    pub fn calculate_iterative_center(&self, cosmo: &Cosmology) -> (f64, f64) {
+    pub fn calculate_iterative_center(&self) -> (f64, f64) {
     
-        let absolute_magnitudes: Vec<f64> = zip(self.magnitudes_members.clone(), self.redshift_members.clone())
-            .map(|(mag, z)| mag - cosmo.distance_modulus(z))
-            .collect();
         let coords_cartesian: Vec<[f64; 3]> = zip(self.ra_members.clone(), self.dec_members.clone())
             .map(|(ra, dec)| convert_equitorial_to_cartesian(&ra, &dec))
             .collect();
-        let flux: Vec<f64> = absolute_magnitudes
+        let flux: Vec<f64> = self.absolute_magnitude_members
             .iter()
             .map(|mag| 10_f64.powf(-0.4 * mag))
             .collect();
@@ -86,7 +83,6 @@ impl Group {
                 break;
             }
         }
-
         let max_flux_idx = temp_flux
             .iter()
             .enumerate()
@@ -131,7 +127,7 @@ pub struct GroupedGalaxyCatalog {
     pub ra: Vec<f64>,
     pub dec: Vec<f64>,
     pub redshift: Vec<f64>,
-    pub magnitudes: Vec<f64>,
+    pub absolute_magnitudes: Vec<f64>,
     pub velocity_errors: Vec<f64>,
     pub group_ids: Vec<i32>
 }
@@ -169,18 +165,18 @@ impl GroupedGalaxyCatalog {
                 let local_ra: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.ra.get(i as usize).unwrap()).collect();
                 let local_dec: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.dec.get(i as usize).unwrap()).collect();
                 let local_z: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.redshift.get(i as usize).unwrap()).collect();
-                let local_mag: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.magnitudes.get(i as usize).unwrap()).collect();
+                let local_mag: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.absolute_magnitudes.get(i as usize).unwrap()).collect();
                 let local_vel_errors: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.velocity_errors.get(i as usize).unwrap()).collect();
 
                 let local_group = Group {
                     ra_members: local_ra,
                     dec_members: local_dec,
                     redshift_members: local_z,
-                    magnitudes_members: local_mag,
+                    absolute_magnitude_members: local_mag,
                     velocity_errors: local_vel_errors
                 };
 
-                let (ra_group, dec_group) = local_group.calculate_iterative_center(cosmo);
+                let (ra_group, dec_group) = local_group.calculate_iterative_center();
                 let z_group = local_group.median_redshift();
                 let [r50_group, rsimga_group, r100_group] = local_group.calculate_radius(ra_group, dec_group, z_group, cosmo);
 
@@ -227,6 +223,7 @@ pub struct GroupCatalog {
 mod tests {
 
     use super::*;
+
     #[test]
     fn test_gapper_velocity_basic() {
 
@@ -235,7 +232,7 @@ mod tests {
             velocity_errors: vec![50., 40., 30., 10.],
             ra_members: vec![0.2, 0.2, 0.2, 0.2],
             dec_members: vec![50., 50., 50., 50.],
-            magnitudes_members: vec![18., 18., 18., 18.]
+            absolute_magnitude_members: vec![-18., -18., -18., -18.]
         };
 
 
@@ -251,18 +248,11 @@ mod tests {
             ra_members: vec![180.0, 179.0, 181.0, 180.0],
             dec_members: vec![0.0, 1.0, -1.0, 0.0],
             redshift_members: vec![0.1; 4],
-            magnitudes_members: vec![12.0, 18.0, 18.0, 18.0], // central very bright.
+            absolute_magnitude_members: vec![-50.0, -18.0, -18.0, -18.0], // central very bright.
             velocity_errors: vec![50., 50., 50., 50.]
         };
 
-        let cosmo = Cosmology {
-            omega_m: 0.3,
-            omega_k: 0.,
-            omega_l: 0.7,
-            h0: 0.7
-        };
-
-        let (ra, dec) = group.calculate_iterative_center(&cosmo);
+        let (ra, dec) = group.calculate_iterative_center();
         // RA should be close to 180.0 and Dec to 0.0 (within ~0.01 deg)
         assert!((ra - 180.0).abs() < 1e-6, "RA deviated too far: {}", ra);
         assert!(dec.abs() < 1e-6, "Dec deviated too far: {}", dec);
@@ -270,6 +260,24 @@ mod tests {
 
     #[test]
     fn weird_group_different_to_master() {
+        let cosmo = Cosmology {omega_m: 0.3, omega_k: 0., omega_l: 0.7, h0: 70.};
+        let apparent_mags = [19.50136, 18.83319, 18.83163];
+        let redshifts = vec![0.29022, 0.28753, 0.28734];
+
+        let absolute_mags: Vec<f64> = apparent_mags
+            .iter().zip(redshifts.clone())
+            .map(|(&mag, z)| mag - cosmo.distance_modulus(z)).collect();
+        let group = Group{
+            ra_members: vec![136.3741, 136.3661, 136.3610],
+            dec_members: vec![1.698054, 1.719675, 1.711949],
+            redshift_members: redshifts,
+            absolute_magnitude_members: absolute_mags,
+            velocity_errors: vec![50., 50., 50.]
+        };
+
+        let (ra, dec) = group.calculate_iterative_center();
+        assert_eq!(ra, group.ra_members[1]);
+        assert_eq!(dec, group.dec_members[1]);
         
     }
 
@@ -280,14 +288,14 @@ mod tests {
             omega_m: 0.3,
             omega_k: 0.,
             omega_l: 0.7,
-            h0: 0.7
+            h0: 70.
         };
 
         let group = Group {
             ra_members: vec![23., 23.2, 22.9, 24.0],
             dec_members: vec![-23., -23.2, -23.2, -23.],
             redshift_members: vec![0.2, 0.2, 0.2, 0.2],
-            magnitudes_members: vec![18., 18., 18., 18.],
+            absolute_magnitude_members: vec![-18., -18., -18., -18.],
             velocity_errors: vec![50., 50., 50., 50.]
         };
 
@@ -295,7 +303,7 @@ mod tests {
         let group_dec = -23.;
         let group_z = 0.2;
 
-        let answer =  [350.5738627578198, 424.34275593189506, 1312.1178128946078];
+        let answer =  [3.505739, 4.243428, 13.121179];
         let result = group.calculate_radius(group_ra, group_dec, group_z, &cosmo);
         for (r, a) in zip(result, answer) {
             assert!((r - a).abs() < 1e-6)
@@ -308,7 +316,7 @@ mod tests {
             omega_m: 0.3,
             omega_k: 0.,
             omega_l: 0.7,
-            h0: 0.7
+            h0: 70.
         };
 
         // making a catalog with two groups, a binary pair, and two single values.
@@ -316,7 +324,7 @@ mod tests {
             ra: vec![23., 23., 23., 23., 43., 43., 43., 56., 56., 90., 90., 5., 270.],
             dec: vec![-20., -20., -20., -20., 0., 0., 0., 90., 90., 18., 18., -90., 56.],
             redshift: vec![0.2, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, 0.8, 0.8, 1.0, 1.0, 0.5, 0.5],
-            magnitudes: vec![18.;13],
+            absolute_magnitudes: vec![-18.;13],
             velocity_errors: vec![50.;13],
             group_ids: vec![1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, -1, -1]
         };

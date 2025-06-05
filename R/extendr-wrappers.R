@@ -48,7 +48,7 @@ fof_links_aaron <- function(ra_array, dec_array, comoving_distances, linking_len
 #' @param velocity_errors Array of velocity errors. 
 #' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
 #' @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
-create_group_catalog <- function(ra, dec, redshift, magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0) .Call(wrap__create_group_catalog, ra, dec, redshift, magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0)
+create_group_catalog <- function(ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0) .Call(wrap__create_group_catalog, ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0)
 
 
 # nolint end

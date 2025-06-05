@@ -97,7 +97,6 @@ mod tests {
             h0: 70.,
         };
 
-        println!("{}",cosmo.distance_modulus(z));
         assert!((cosmo.comoving_distance(z) - 1194.397).abs() < 1e-3);
         assert!((cosmo.comoving_transverse_distance(z) - 1194.397).abs() < 1e-3);
         assert!((cosmo.distance_modulus(z) - 40.95546).abs() < 1e-3);

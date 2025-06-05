@@ -12,7 +12,8 @@ fof(
   redshifts,
   density_function,
   cosmology,
-  completeness = rep(1, length(ras))
+  completeness = rep(1, length(ras)),
+  Mmax = 1e+15
 )
 }
 \arguments{

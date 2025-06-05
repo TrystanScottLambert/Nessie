@@ -8,7 +8,7 @@ create_group_catalog(
   ra,
   dec,
   redshift,
-  magnitudes,
+  absolute_magnitudes,
   velocity_errors,
   group_ids,
   omega_m,
@@ -24,9 +24,9 @@ create_group_catalog(
 
 \item{redshift}{Array of redshift values.}
 
-\item{magnitudes}{Array of apparent magnitude values.}
-
 \item{velocity_errors}{Array of velocity errors.}
+
+\item{magnitudes}{Array of apparent magnitude values.}
 
 \item{group_id}{Array of the group ids, where -1 represents galaxies not in a group.}
 }

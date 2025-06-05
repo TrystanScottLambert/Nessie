@@ -45,6 +45,7 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 
     comoving_distances <- comoving_distances_at_z(redshifts, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
     max_comoving <- max(comoving_distances) + 2*binwidth # allowing a 2 binwidth grace
+    #TODO: Remove this shit when before release
     max_comoving <- 2000
     kde <- density(comoving_distances, bw = binwidth / sqrt(12), from = 0, to = max_comoving, n = N, kern = "rect")
     kde_func <- approxfun(kde$x, kde$y, rule = 2)
@@ -134,7 +135,7 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 #'
 #' @return Data Frame of the galaxy ids and which groups they are in.
 #'
-fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, completeness = rep(1, length(ras))) {
+fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, completeness = rep(1, length(ras)), Mmax=1e15) {
   co_dists <- comoving_distances_at_z(redshifts, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
 
   # Calculating the plane-of-sky linking lengths
@@ -143,7 +144,7 @@ fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, compl
   max_on_sky_radius = celestial::coshaloMvirToRvir(Mmax, z = redshifts, Rho="crit", cosmology$H0)
   too_wide =  gal_rad > max_on_sky_radius
   gal_rad[too_wide] = max_on_sky_radius[too_wide]
-  linking_lengths_pos = gal_rad/(cosmo$h * co_dists)
+  linking_lengths_pos = gal_rad/(cosmology$h * co_dists)
 
   # Calculating the line-of-sight linking lengths
   R = r0 * (1 + redshifts)/(sqrt(cosmology$Om0 * (1+redshifts)^3 + cosmology$OmL))

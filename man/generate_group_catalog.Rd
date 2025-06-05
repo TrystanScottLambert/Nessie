@@ -8,7 +8,7 @@ generate_group_catalog(
   ra,
   dec,
   redshift,
-  magnitudes,
+  absolute_magnitudes,
   velocity_errors,
   group_ids,
   cosmology
