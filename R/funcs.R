@@ -158,8 +158,8 @@ fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, compl
   max_los_distances = celestial::coshaloMvirToSigma(Mmax, z= redshifts, Rho="crit", cosmology$H0) * (1+redshifts) / celestial::cosgrowH(H0=cosmology$H0, z=redshifts)
   too_far = linking_lengths_los > max_los_distances
   linking_lengths_los[too_far] = max_los_distances[too_far]
-
-  return(.find_groups(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los))
+  groups = .find_groups(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los)
+  return(groups)
 }
 
 .fof_aaron <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, completeness = rep(1, length(ras)), Mmax=1e15) {
@@ -179,8 +179,8 @@ fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, compl
   max_los_distances = celestial::coshaloMvirToSigma(Mmax, z= redshifts, Rho="crit", cosmology$H0) * (1+redshifts) / celestial::cosgrowH(H0=cosmology$H0, z=redshifts)
   too_far = linking_lengths_los > max_los_distances
   linking_lengths_los[too_far] = max_los_distances[too_far]
-
-  return(.find_groups_aaron(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los))
+  groups = .find_groups_aaron(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los)
+  return(groups)
 }
 
 
