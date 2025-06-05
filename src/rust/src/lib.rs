@@ -12,7 +12,7 @@ pub mod link_finder;
 
 use crate::cosmology_funcs::Cosmology;
 use crate::group_properties::GroupedGalaxyCatalog;
-use crate::link_finder::{ffl1, fast_ffl1};
+use crate::link_finder::{ffl1, fast_ffl1_parallel};
 
 
 /// Calculates multiple comoving distances for multiple redshifts.
@@ -77,7 +77,7 @@ fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: 
 /// @export
 #[extendr]
 fn fof_links_fast(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
-    let links = fast_ffl1(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+    let links = fast_ffl1_parallel(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
     let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
     let j_vec: Vec<usize> = links.iter().map(|(_, y)| *y + 1).collect();
     list![i = i_vec, j = j_vec]

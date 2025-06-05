@@ -1,5 +1,10 @@
 
+
+use kiddo::{KdTree, SquaredEuclidean};
+use rayon::prelude::*;
+
 use crate::spherical_trig_funcs::convert_equitorial_to_cartesian;
+
 
 
 // Combined function that finds indices and removes target in one go
@@ -68,6 +73,7 @@ pub fn ffl1(
 }
 
 
+
 pub fn fast_ffl1(
     ra_array: Vec<f64>,
     dec_array: Vec<f64>,
@@ -96,10 +102,164 @@ pub fn fast_ffl1(
         let possible_los_idx = find_indices_in_range(&sorted_distances, &dist_argsort, lower_lim, upper_lim, i);
 
         for j in possible_los_idx {
-            let ztemp = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
+            let average_los_ll = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
             let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
 
-            if zrad <= ztemp {
+            if zrad <= average_los_ll {
+                let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
+
+                let radproj = (0..3)
+                    .map(|k| (coords[i][k] - coords[j][k]).powi(2))
+                    .sum::<f64>();
+
+                if radproj <= bgal2 {
+                    ind.push((i, j));
+                }
+            }
+        }
+    }
+    ind
+}
+
+
+pub fn fast_ffl1_parallel(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> Vec<(usize, usize)> {
+    let n = ra_array.len();
+
+    let coords: Vec<[f64; 3]> = (0..n)
+        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
+        .collect();
+
+    let max_los_ll = linking_lengths_los
+        .iter()
+        .cloned()
+        .fold(f64::NAN, f64::max);
+
+    let mut sorted_distances = comoving_distances.clone();
+    sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    let dist_argsort = argsort(&comoving_distances);
+
+    // Parallel outer loop
+    let results: Vec<(usize, usize)> = (0..(n - 1))
+        .into_par_iter()
+        .map(|i| {
+            let dist_i = comoving_distances[i];
+            let lower_lim = dist_i - max_los_ll;
+            let upper_lim = dist_i + max_los_ll;
+            let possible_los_idx =
+                find_indices_in_range(&sorted_distances, &dist_argsort, lower_lim, upper_lim, i);
+
+            let mut local_pairs = Vec::new();
+
+            for j in possible_los_idx {
+                let average_los_ll = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
+                let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
+
+                if zrad <= average_los_ll {
+                    let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
+
+                    let radproj = (0..3)
+                        .map(|k| (coords[i][k] - coords[j][k]).powi(2))
+                        .sum::<f64>();
+
+                    if radproj <= bgal2 {
+                        local_pairs.push((i, j));
+                    }
+                }
+            }
+
+            local_pairs
+        })
+        .flatten()
+        .collect();
+
+    results
+}
+
+
+
+struct SkyCatalog {
+    tree: KdTree<f64, 3>,
+}
+
+impl SkyCatalog {
+    /// Create a new catalog from sky coordinates
+    pub fn new(cartesian_coords: Vec<[f64; 3]>) -> Self {
+        let mut tree = KdTree::new();
+        
+        for (i, coord) in cartesian_coords.iter().enumerate() {
+            tree.add(&[coord[0], coord[1], coord[2]], i as u64);
+        }
+        Self { tree }
+    }
+
+    /// Search for all coordinates within a given angular distance of a specific coordinate
+    /// 
+    /// # Arguments
+    /// * `index` - Index of the coordinate to search around
+    /// * `radius_deg` - Search radius in degrees
+    /// 
+    /// # Returns
+    /// * Vector of indices of coordinates within the search radius (excluding the query coordinate itself)
+    pub fn search_around(&self, query_point: [f64; 3], projected_distance: f64) -> Vec<usize> {
+
+        // Find all points within the chord distance
+        let neighbors = self.tree.within::<SquaredEuclidean>(&query_point, projected_distance);
+        // Filter out the query point itself and return just the indices
+        neighbors
+            .into_iter()
+            .map(|neighbor| neighbor.item)
+            .map(|idx| idx as usize)
+            .collect()
+    }
+}
+
+#[allow(dead_code)]
+// experiment trying to use kd-tree for angular search speed up.
+fn fast_ffl1_tree(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> Vec<(usize, usize)> {
+    let n = ra_array.len();
+
+    // Convert (RA, Dec, dist) to 3D Cartesian coordinates
+    let coords: Vec<[f64; 3]> = (0..n)
+        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
+        .collect();
+    
+    let max_los_ll = linking_lengths_los.iter().cloned().fold(f64::NAN, f64::max);
+    let max_pos_ll = linking_lengths_pos.iter().cloned().fold(f64::NAN, f64::max);
+    let mut sorted_distances = comoving_distances.clone();
+    sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let dist_argsort = argsort(&comoving_distances);
+
+    let mut ind = Vec::new();
+
+    for i in 0..(n - 1) {
+        let dist_i = comoving_distances[i];
+        let lower_lim = dist_i - max_los_ll;
+        let upper_lim = dist_i + max_los_ll;
+        let possible_los_idx = find_indices_in_range(&sorted_distances, &dist_argsort, lower_lim, upper_lim, i);
+        
+        let possible_coords: Vec<[f64; 3]> = possible_los_idx.clone().into_iter().map(|idx| *coords.get(idx).unwrap()).collect();
+        let local_tree = SkyCatalog::new(possible_coords.clone());
+        let possible_local_idx = local_tree.search_around(coords[i], max_pos_ll);
+        let search_idx: Vec<usize> = possible_local_idx.iter().map(|&idx| possible_los_idx[idx]).collect();
+
+        for j in search_idx {
+            let average_los_ll = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
+            let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
+
+            if zrad <= average_los_ll {
                 let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
 
                 let radproj = (0..3)
@@ -135,7 +295,7 @@ mod tests {
         let linking_lengths_los = vec![18.; 6];
 
         let classic_links = ffl1(ra_array.clone(), dec_array.clone(), comoving_distances.clone(), linking_lengths_pos.clone(), linking_lengths_los.clone());
-        let new_links = fast_ffl1(ra_array.clone(), dec_array.clone(), comoving_distances.clone(), linking_lengths_pos.clone(), linking_lengths_los.clone());
+        let new_links = fast_ffl1_parallel(ra_array.clone(), dec_array.clone(), comoving_distances.clone(), linking_lengths_pos.clone(), linking_lengths_los.clone());
         for (new, classic) in zip(new_links, classic_links) {
             assert_eq!(new.0, classic.0);
             assert_eq!(new.1, classic.1);
