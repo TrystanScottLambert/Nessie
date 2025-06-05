@@ -77,11 +77,7 @@ impl Group {
             }).collect::<Vec<f64>>().try_into().unwrap();
 
             let distances: Vec<f64> = temp_coords.iter()
-                .map(|coord| {
-                ((coord[0] - center[0]).powi(2) + 
-                (coord[1] - center[1]).powi(2) +
-                (coord[2] - center[2]).powi(2)).sqrt()
-                }).collect();
+                .map(|coord| euclidean_distance_3d(coord, &center)).collect();
 
             if let Some((max_idx, _)) = distances.iter().enumerate().max_by(|a, b| a.1.partial_cmp(b.1).unwrap()) {
                 temp_coords.remove(max_idx);
@@ -107,19 +103,15 @@ impl Group {
         (wrapped_ra, center[1])
     }
 
-
-
     pub fn calculate_radius(&self, group_center_ra: f64, group_center_dec: f64, group_center_z: f64, cosmo: &Cosmology) -> [f64; 3] {
         let group_center_dist= cosmo.comoving_distance(group_center_z);
-        let group_dists: Vec<f64> = self.redshift_members.iter().map(|z| cosmo.comoving_distance(*z)).collect();
         let center = convert_equitorial_to_cartesian_scaled(group_center_ra, group_center_dec, group_center_dist);
 
         let mut distances: Vec<f64> = self.ra_members
             .iter()
             .zip(&self.dec_members)
-            .zip(&group_dists)
-            .map(|((&ra, &dec), &d)| {
-                let pos = convert_equitorial_to_cartesian_scaled(ra, dec, d);
+            .map(|(&ra, &dec)| {
+                let pos = convert_equitorial_to_cartesian_scaled(ra, dec, group_center_dist);
                 euclidean_distance_3d(&pos, &center)
             })
             .collect();
@@ -174,7 +166,6 @@ impl GroupedGalaxyCatalog {
                     .filter_map(|(idx, i)| if i == id { Some(idx as i32) } else {None})
                     .collect();
 
-
                 let local_ra: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.ra.get(i as usize).unwrap()).collect();
                 let local_dec: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.dec.get(i as usize).unwrap()).collect();
                 let local_z: Vec<f64> = local_group_ids.clone().into_iter().map(|i| *self.redshift.get(i as usize).unwrap()).collect();
@@ -201,7 +192,7 @@ impl GroupedGalaxyCatalog {
                 r100_groups.push(r100_group);
                 rsigma_groups.push(rsimga_group);
                 distance_groups.push(local_group.median_distance(cosmo));
-                multiplicity_groups.push(local_group.multiplicity())
+                multiplicity_groups.push(local_group.multiplicity());
 
             }
         }
@@ -275,6 +266,11 @@ mod tests {
         // RA should be close to 180.0 and Dec to 0.0 (within ~0.01 deg)
         assert!((ra - 180.0).abs() < 1e-6, "RA deviated too far: {}", ra);
         assert!(dec.abs() < 1e-6, "Dec deviated too far: {}", dec);
+    }
+
+    #[test]
+    fn weird_group_different_to_master() {
+        
     }
 
 

@@ -118,13 +118,14 @@ fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, magnitu
     let cosmo = &Cosmology { omega_m, omega_k, omega_l, h0 };
     let group_catalog = catalog.calculate_group_properties(cosmo);
     list![
+        group_id = group_catalog.ids,
         ra = group_catalog.ras,
         dec = group_catalog.decs,
         redshift = group_catalog.redshifts,
         co_dist = group_catalog.distances,
         r50 = group_catalog.r50s,
         r100 = group_catalog.r100s,
-        rsigms = group_catalog.rsigmas,
+        rsigma = group_catalog.rsigmas,
         multiplicity = group_catalog.multiplicity
     ]
 }

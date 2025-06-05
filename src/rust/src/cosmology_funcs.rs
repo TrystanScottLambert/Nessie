@@ -80,12 +80,42 @@ mod tests {
             omega_m: 0.3,
             omega_k: 0.,
             omega_l: 0.7,
-            h0: 0.7
+            h0: 70.,
         };
 
         let e = cosmo.e_func(z);
-        println!("What the poes: {e}");
         assert!((e - 1.16580444329227).abs() < 1e-5);
+    }
+
+    #[test]
+    fn testing_flat_cosmo_versus_celestial() {
+        let z = 0.3;
+        let cosmo = Cosmology {
+            omega_m: 0.3,
+            omega_k: 0.,
+            omega_l: 0.7,
+            h0: 70.,
+        };
+
+        println!("{}",cosmo.distance_modulus(z));
+        assert!((cosmo.comoving_distance(z) - 1194.397).abs() < 1e-3);
+        assert!((cosmo.comoving_transverse_distance(z) - 1194.397).abs() < 1e-3);
+        assert!((cosmo.distance_modulus(z) - 40.95546).abs() < 1e-3);
+    }
+
+    #[test]
+    fn testing_inverse_codist_function() {
+        let z = 0.3;
+        let cosmo = Cosmology {
+            omega_m: 0.3,
+            omega_k: 0.,
+            omega_l: 0.7,
+            h0: 70.,
+        };
+
+        let co_dist = cosmo.comoving_distance(z);
+        let inverse = cosmo.inverse_codist(co_dist);
+        assert!((inverse - z).abs() < 1e-7);
     }
 
 }

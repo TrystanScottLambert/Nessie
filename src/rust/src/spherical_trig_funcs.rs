@@ -38,6 +38,7 @@ pub fn euclidean_distance_3d(point_1: &[f64; 3], point_2: &[f64; 3]) -> f64 {
 
 #[cfg(test)]
 mod test {
+    use std::iter::zip;
     use super::*;
 
     const EPSILON: f64 = 1e-6;
@@ -75,19 +76,34 @@ mod test {
             ra_norm += 360.0;
         }
 
-        assert!((ra_norm - ra).abs() < 1e-6);
-        assert!((equi[1] - dec).abs() < 1e-6);
+        assert!((ra_norm - ra).abs() < EPSILON);
+        assert!((equi[1] - dec).abs() < EPSILON);
     }
 
     #[test]
     fn test_equatorial_to_cartesian_scaled() {
-        let ra = 0.0;
-        let dec = 0.0;
-        let distance = 100.0;
-        let result = convert_equitorial_to_cartesian_scaled(ra, dec, distance);
-        assert!((result[0] - 100.0).abs() < EPSILON);
-        assert!((result[1]).abs() < EPSILON);
-        assert!((result[2]).abs() < EPSILON);
+        let ra = [120., 122., 124.];
+        let dec = [-56., -34., -30.];
+        let distance = [10., 11., 12.];
+        let result_1 = convert_equitorial_to_cartesian_scaled(ra[0], dec[0], distance[0]);
+        let result_2 = convert_equitorial_to_cartesian_scaled(ra[1], dec[1], distance[1]);
+        let result_3 = convert_equitorial_to_cartesian_scaled(ra[2], dec[2], distance[2]);
+
+        let answer_1 = [ -2.795965, 4.842753, -8.290376];
+        let answer_2 = [-4.832553, 7.733701, -6.151122];
+        let answer_3 = [-5.811303, 8.615611, -6.000000];
+
+        for (r, a) in zip(result_1, answer_1) {
+            assert!((r - a).abs() < EPSILON);
+        }
+
+        for (r, a) in zip(result_2, answer_2) {
+            assert!((r - a).abs() < EPSILON);
+        }
+
+        for (r, a) in zip(result_3, answer_3) {
+            assert!((r - a).abs() < EPSILON);
+        }
     }
 
     #[test]
