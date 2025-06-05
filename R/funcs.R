@@ -106,6 +106,12 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 #' @return Data Frame of the galaxy ids and which groups they are in.
 #'
 .find_groups <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) {
+  links <- fof_links_fast(ra_array, dec_array, comoving_distances,  linking_lengths_pos, linking_lengths_los)
+  group <- .group_graph(links)
+  return(group)
+}
+
+.find_groups_aaron <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) {
   links <- fof_links_aaron(ra_array, dec_array, comoving_distances,  linking_lengths_pos, linking_lengths_los)
   group <- .group_graph(links)
   return(group)
@@ -155,6 +161,28 @@ fof <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, compl
 
   return(.find_groups(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los))
 }
+
+.fof_aaron <- function(b0, r0, ras, decs, redshifts, density_function, cosmology, completeness = rep(1, length(ras)), Mmax=1e15) {
+  co_dists <- comoving_distances_at_z(redshifts, cosmology$Om0, cosmology$OmK, cosmology$OmL, cosmology$H0)
+
+  # Calculating the plane-of-sky linking lengths
+  linking_lengths = density_function(redshifts)^(-1./3) * (completeness)^(-1./3)
+  gal_rad = b0 * linking_lengths
+  max_on_sky_radius = celestial::coshaloMvirToRvir(Mmax, z = redshifts, Rho="crit", cosmology$H0)
+  too_wide =  gal_rad > max_on_sky_radius
+  gal_rad[too_wide] = max_on_sky_radius[too_wide]
+  linking_lengths_pos = gal_rad/(cosmology$h * co_dists)
+
+  # Calculating the line-of-sight linking lengths
+  R = r0 * (1 + redshifts)/(sqrt(cosmology$Om0 * (1+redshifts)^3 + cosmology$OmL))
+  linking_lengths_los = (gal_rad * R)/cosmology$h
+  max_los_distances = celestial::coshaloMvirToSigma(Mmax, z= redshifts, Rho="crit", cosmology$H0) * (1+redshifts) / celestial::cosgrowH(H0=cosmology$H0, z=redshifts)
+  too_far = linking_lengths_los > max_los_distances
+  linking_lengths_los[too_far] = max_los_distances[too_far]
+
+  return(.find_groups_aaron(ras, decs, co_dists, linking_lengths_pos, linking_lengths_los))
+}
+
 
 
 #' Get the group ids for the given redshift survey.

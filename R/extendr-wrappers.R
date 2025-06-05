@@ -26,7 +26,7 @@ z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .C
 
 #' finding the links between all galaxies in a brute force way.
 #' @description
-#' `fof_link_aaron` will determine all connections between galaxies in a survey and return the pairs.
+#' `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
 #' @param ra Array of right ascension values.
 #' @param dec Array of declination values.
 #' @param comoving_distances Array of comoving distances in Mpc. 
@@ -36,6 +36,19 @@ z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .C
 #' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 #' @export
 fof_links_aaron <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) .Call(wrap__fof_links_aaron, ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
+
+#' finding the links between all galaxies in a brute force way.
+#' @description
+#' `fof_links_fast` will determine all connections between galaxies in a survey and return the pairs.
+#' @param ra Array of right ascension values.
+#' @param dec Array of declination values.
+#' @param comoving_distances Array of comoving distances in Mpc. 
+#' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
+#' @param b0 The plane-of-sky constant to be scaled. 
+#' @param r0 The line-of-sight constant to be scaled.
+#' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
+#' @export
+fof_links_fast <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) .Call(wrap__fof_links_fast, ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
 
 #' Creates a group catalog from the given arrays.
 #' @description

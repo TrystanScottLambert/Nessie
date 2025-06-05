@@ -8,10 +8,11 @@ pub mod spherical_trig_funcs;
 pub mod cosmology_funcs;
 pub mod helper_funcs;
 pub mod constants;
+pub mod link_finder;
 
 use crate::cosmology_funcs::Cosmology;
-use crate::spherical_trig_funcs::{convert_equitorial_to_cartesian};
 use crate::group_properties::GroupedGalaxyCatalog;
+use crate::link_finder::{ffl1, fast_ffl1};
 
 
 /// Calculates multiple comoving distances for multiple redshifts.
@@ -44,46 +45,9 @@ fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omeg
 }
 
 
-pub fn ffl1(
-    ra_array: Vec<f64>,
-    dec_array: Vec<f64>,
-    comoving_distances: Vec<f64>,
-    linking_lengths_pos: Vec<f64>,
-    linking_lengths_los: Vec<f64>,
-) -> Vec<(usize, usize)> {
-    let n = ra_array.len();
-
-    // Convert (RA, Dec, dist) to 3D Cartesian coordinates
-    let coords: Vec<[f64; 3]> = (0..n)
-        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
-        .collect();
-    
-    let mut ind = Vec::new();
-
-    for i in 0..(n - 1) {
-        for j in (i+1)..n {
-            let ztemp = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
-            let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
-
-            if zrad <= ztemp {
-                let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
-
-                let radproj = (0..3)
-                    .map(|k| (coords[i][k] - coords[j][k]).powi(2))
-                    .sum::<f64>();
-
-                if radproj <= bgal2 {
-                    ind.push((i, j));
-                }
-            }
-        }
-    }
-    ind
-}
-
 /// finding the links between all galaxies in a brute force way.
 /// @description
-/// `fof_link_aaron` will determine all connections between galaxies in a survey and return the pairs.
+/// `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
 /// @param ra Array of right ascension values.
 /// @param dec Array of declination values.
 /// @param comoving_distances Array of comoving distances in Mpc. 
@@ -100,6 +64,24 @@ fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: 
     list![i = i_vec, j = j_vec]
 }
 
+/// finding the links between all galaxies in a brute force way.
+/// @description
+/// `fof_links_fast` will determine all connections between galaxies in a survey and return the pairs.
+/// @param ra Array of right ascension values.
+/// @param dec Array of declination values.
+/// @param comoving_distances Array of comoving distances in Mpc. 
+/// @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
+/// @param b0 The plane-of-sky constant to be scaled. 
+/// @param r0 The line-of-sight constant to be scaled.
+/// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
+/// @export
+#[extendr]
+fn fof_links_fast(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
+    let links = fast_ffl1(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+    let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
+    let j_vec: Vec<usize> = links.iter().map(|(_, y)| *y + 1).collect();
+    list![i = i_vec, j = j_vec]
+}
 
 /// Creates a group catalog from the given arrays.
 /// @description
@@ -138,6 +120,7 @@ extendr_module! {
     fn comoving_distances_at_z;
     fn z_at_comoving_distances;
     fn fof_links_aaron;
+    fn fof_links_fast;
     fn create_group_catalog;
 }
 
