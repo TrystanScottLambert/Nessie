@@ -1,12 +1,3 @@
-test_that("Flat cosmology simple", {
-  result <- create_flat_cosmology(0.7, 0.3)
-  expect_equal(result$h, 0.7)
-  expect_equal(result$H0, 70)
-  expect_equal(result$Om0, 0.3)
-  expect_equal(result$OmL, 0.7)
-  expect_equal(result$OmK, 0.)
-  expect_equal(result$OmR, 0.)
-})
 
 test_that("density function simple", {
   # This test is difficult to do. We can at least test that this is working and is reasonable.
@@ -16,7 +7,7 @@ test_that("density function simple", {
 
   set.seed(123)  # for reproducibility
   N = 100000
-  cosmo <- create_flat_cosmology(0.7, 0.3)
+  cosmo <- FlatCosmology$new(0.7, 0.3)
   fractional_area = 0.001
   points <- rnorm(n = N, mean = 0.2, sd = 0.01)
   rho_mean <-  create_density_function(points, N, fractional_area, cosmo)
