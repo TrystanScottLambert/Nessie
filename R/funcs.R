@@ -117,6 +117,9 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
   return(group)
 }
 
+
+
+
 #' Run the friends-of-friends algorithm
 #'
 #' @description
