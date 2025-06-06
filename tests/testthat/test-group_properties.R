@@ -7,20 +7,23 @@ test_that("comparing to the old code.", {
   df_data <- df_data[df_data$Z < 0.5, ]
   df_data <- df_data[df_data$Rpetro < 19.8, ]
   velocity_errors <- rep(50., length(df_data$RA))
-  cosmo <- create_flat_cosmology(1., 0.3)
+  cosmo <- FlatCosmology$new(h = 1., omega_m = 0.3)
 
   randoms <- as.data.frame(read.csv(infile_randoms))
   random_z <- randoms$z
   g09_frac_area <- 0.001453924
-  cosmo_randoms <- create_flat_cosmology(1., 0.25)
+  cosmo_randoms <- FlatCosmology$new(h = 1., omega_m = 0.25)
   rho_mean <- create_density_function(random_z, length(random_z)/400, g09_frac_area, cosmo_randoms)
 
-  group_ids <- get_group_ids(0.06, 18., df_data$RA, df_data$DEC, df_data$Z, rho_mean, cosmo)
+  catalog <- RedshiftCatalog$new(df_data$RA, df_data$DEC, df_data$Z, rho_mean, cosmo)
+  catalog$set_group_ids(0.06, 18.)
+  group_ids <- catalog$group_ids
   df_data['group_ids'] <- group_ids
   df_data['ab_mag'] <- df_data$Rpetro - celestial::cosdistDistMod(df_data$Z)
 
   df_master <- as.data.frame(read.csv(infile_master_groups))
-  result <- generate_group_catalog(df_data$RA, df_data$DEC, df_data$Z, df_data$ab_mag, velocity_errors, group_ids, cosmo)
+
+  result <- catalog$calculate_group_table(df_data$ab_mag, velocity_errors)
 
   expect_equal(result$group_id, df_master$Gnum)
   expect_equal(result$multiplicity, df_master$Mult)

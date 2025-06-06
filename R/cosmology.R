@@ -31,7 +31,7 @@ FlatCosmology <- R6::R6Class("FlatCosmology",
      },
 
      velocity_dispersion = function(mass_solar, redshift) {
-       celestial::coshaloMvirToSigma(mass_solar, z = redshift_array, Rho = "crit", H0 = self$hubble_constant, OmegaM = self$omega_m)
+       celestial::coshaloMvirToSigma(mass_solar, z = redshift, Rho = "crit", H0 = self$hubble_constant, OmegaM = self$omega_m)
      },
 
      h0_grow = function(redshift) {

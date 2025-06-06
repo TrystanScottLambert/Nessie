@@ -30,7 +30,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     fof = function(b0, r0, max_stellar_mass = 1e15) {
       co_dists <- self$cosmology$comoving_distance(self$redshift_array)
       # Calculating the plane-of-sky linking lengths
-      linking_lengths <- density_function(self$redshift_array)^(-1./3) * (self$completeness)^(-1./3)
+      linking_lengths <- self$density_function(self$redshift_array)^(-1./3) * (self$completeness)^(-1./3)
       gal_rad <- b0 * linking_lengths
       max_on_sky_radius <- self$cosmology$virial_radius(max_stellar_mass, self$redshift_array)
       too_wide <-  gal_rad > max_on_sky_radius
