@@ -16,7 +16,7 @@ test_that("comparing to the old code.", {
   rho_mean <- create_density_function(random_z, length(random_z)/400, g09_frac_area, cosmo_randoms)
 
   catalog <- RedshiftCatalog$new(df_data$RA, df_data$DEC, df_data$Z, rho_mean, cosmo)
-  catalog$set_group_ids(0.06, 18.)
+  catalog$run_fof(0.06, 18.)
   group_ids <- catalog$group_ids
   df_data['group_ids'] <- group_ids
   df_data['ab_mag'] <- df_data$Rpetro - celestial::cosdistDistMod(df_data$Z)

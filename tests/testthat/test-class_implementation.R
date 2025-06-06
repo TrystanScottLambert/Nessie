@@ -10,8 +10,8 @@ test_that("it runs", {
   density_function <- function(z) {rep(0.2, length(z))}
   cat = RedshiftCatalog$new(ra_array, dec_array, redshift_array, density_function, cosmo, completeness)
 
-  group <- cat$fof(0.06, 18)
-  cat$set_group_ids(0.06, 18)
+  group <- cat$get_raw_groups(0.06, 18)
+  cat$run_fof(0.06, 18)
   group_catalog <- cat$calculate_group_table(absolute_magnitudes, velocity_errors)
 
   expect_equal(group$galaxy_id, c(1, 2))
@@ -46,7 +46,7 @@ test_that("getting group ids works on simple case", {
   rho_mean <-  create_density_function(random_redshifts, 20000, 0.001, cosmology = cosmo)
 
   cat <- RedshiftCatalog$new(ra_array = ras, dec_array = decs, redshift_array = redshifts, density_function = rho_mean, cosmology = cosmo)
-  cat$set_group_ids(b0, r0)
+  cat$run_fof(b0, r0)
 
   ans <- c(1, 1, 1, 2, 2, 2, 3, 3, -1, -1)
   expect_equal(cat$group_ids, ans)

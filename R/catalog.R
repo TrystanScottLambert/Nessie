@@ -27,7 +27,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       }
     },
 
-    fof = function(b0, r0, max_stellar_mass = 1e15) {
+    get_raw_groups = function(b0, r0, max_stellar_mass = 1e15) {
       co_dists <- self$cosmology$comoving_distance(self$redshift_array)
       # Calculating the plane-of-sky linking lengths
       linking_lengths <- self$density_function(self$redshift_array)^(-1./3) * (self$completeness)^(-1./3)
@@ -50,8 +50,8 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       return(groups)
     },
 
-    set_group_ids = function(b0, r0, max_stellar_mass = 1e15) {
-      group_links <- self$fof(b0, r0, max_stellar_mass)
+    run_fof = function(b0, r0, max_stellar_mass = 1e15) {
+      group_links <- self$get_raw_groups(b0, r0, max_stellar_mass)
       all_ids <- seq(length(self$ra_array)) # positions of all galaxies
       singleton_galaxies <- setdiff(all_ids, group_links$galaxy_id)
       singleton_marker_id <- rep(-1, length(singleton_galaxies))
