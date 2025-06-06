@@ -1,5 +1,22 @@
 library(R6)
 
+#' RedshiftCatalog class
+#'
+#' @description
+#' A catalog object for redshift-space galaxy data that supports group finding
+#' using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengths.
+#'
+#' @field ra_array A numeric vector of Right Ascension values (in degrees).
+#' @field dec_array A numeric vector of Declination values (in degrees).
+#' @field redshift_array A numeric vector of redshift values.
+#' @field density_function A function that takes redshift values and returns the local density.
+#' @field cosmology A FlatCosmology object (created using the FlatCosmology class).
+#' @field completeness A numeric vector of completeness values per galaxy (default is 1 for all).
+#' @field group_ids An integer vector storing the resulting group ID for each galaxy (after `run_fof()` is called).
+#' @field current_r0 The most recent `r0` used in `run_fof()`
+#' @field current_b0 The most recent `b0` used in `run_fof()`
+#'
+#' @export
 RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
   public = list(
     ra_array = NULL,
@@ -12,6 +29,15 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     current_r0 = NULL,
     current_b0 = NULL,
 
+
+    #' @description
+    #' Create a new RedshiftCatalog object.
+    #' @param ra_array A numeric vector of right ascension values (degrees).
+    #' @param dec_array A numeric vector of declination values (degrees).
+    #' @param redshift_array A numeric vector of redshifts.
+    #' @param density_function A function that takes redshifts and returns galaxy density.
+    #' @param cosmology A FlatCosmology object (created using the FlatCosmology class).
+    #' @param completeness An optional numeric vector of completeness weights (default: 1 for all galaxies).
     initialize = function(
       ra_array, dec_array, redshift_array, density_function, cosmology, completeness=NULL
       ) {
@@ -27,6 +53,15 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       }
     },
 
+
+    #' @description
+    #' Generate FoF links between galaxies based on spatial and redshift linking lengths. There is
+    #' very little reason to have to run this yourself. In most cases it is more appropriate to run
+    #' the `run_fof` method.
+    #' @param b0 The plane-of-sky linking length constant.
+    #' @param r0 The line-of-sight linking length constant.
+    #' @param max_stellar_mass The maximum stellar mass to cap linking distances (default: 1e15 solar masses).
+    #' @return A data.frame with columns `galaxy_id` and `group_id` indicating linked galaxies.
     get_raw_groups = function(b0, r0, max_stellar_mass = 1e15) {
       co_dists <- self$cosmology$comoving_distance(self$redshift_array)
       # Calculating the plane-of-sky linking lengths
@@ -50,6 +85,12 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       return(groups)
     },
 
+    #' @description
+    #' Run the full Friends-of-Friends (FoF) algorithm and assign group IDs to all galaxies.
+    #' Singleton galaxies (unlinked) are given group ID -1.
+    #' @param b0 The plane-of-sky linking length scale factor.
+    #' @param r0 The line-of-sight linking length scale factor.
+    #' @param max_stellar_mass The maximum stellar mass to cap linking distances (default: 1e15).
     run_fof = function(b0, r0, max_stellar_mass = 1e15) {
       group_links <- self$get_raw_groups(b0, r0, max_stellar_mass)
       all_ids <- seq(length(self$ra_array)) # positions of all galaxies
@@ -58,9 +99,19 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       all_galaxies <- rbind(
         group_links, data.frame(galaxy_id = singleton_galaxies, group_id = singleton_marker_id))
       self$group_ids <- as.integer(all_galaxies[order(all_galaxies$galaxy_id), ]$group_id)
+      self$current_r0 <- r0
+      self$current_b0 <- b0
     },
 
+    #' @description
+    #' Generate a summary data.frame of group properties based on assigned group IDs.
+    #' @param absolute_magnitudes A numeric vector of absolute magnitudes per galaxy.
+    #' @param velocity_errors A numeric vector of redshift or velocity errors.
+    #' @return A data.frame summarizing group-level statistics.
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
+      if (is.null(self$group_ids)) {
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`.")
+      }
       as.data.frame(create_group_catalog(
         self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, velocity_errors,
         self$group_ids, self$cosmology$omega_m, self$cosmology$omega_k, self$cosmology$omega_lambda,
