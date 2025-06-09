@@ -9,10 +9,12 @@ pub mod cosmology_funcs;
 pub mod helper_funcs;
 pub mod constants;
 pub mod link_finder;
+pub mod cost_function;
 
 use crate::cosmology_funcs::Cosmology;
 use crate::group_properties::GroupedGalaxyCatalog;
 use crate::link_finder::{ffl1, fast_ffl1_parallel};
+use crate::cost_function::calculate_s_total;
 
 
 /// Calculates multiple comoving distances for multiple redshifts.
@@ -112,6 +114,28 @@ fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolut
     ]
 }
 
+/// Calculating the cost metrics for comparison to mock catalogs. 
+/// @description
+/// This function will compare the measured groups to ones of known grouping (usually from simulations.)
+/// This is done by calculating the metrics defined as equations (9 - 15) in Robotham+2011.
+/// @param measured_groups Array of the group ids as an integer of the measured groups.
+/// @param mock_groups Array of the mock group ids as integers. 
+/// @param singleton_ids the id value that is assigned to the singleton cases (groups of one member). Should be an integer (Usually negative).
+/// @returns A list of the values of equations 9 - 15 in Robotham+2011. 
+#[extendr]
+fn calculate_cost_metrics(measured_groups: &[i32], mock_groups: &[i32], singleton_id: i32) -> List {
+    let s_metrics = calculate_s_total(measured_groups, mock_groups, singleton_id);
+    list!(
+        e_fof = s_metrics.e_metrics.fof_metric,
+        e_mock = s_metrics.e_metrics.mock_metric,
+        e_total = s_metrics.e_metrics.total_metric,
+        q_fof = s_metrics.q_metrics.fof_metric,
+        q_mock = s_metrics.q_metrics.mock_metric,
+        q_total = s_metrics.q_metrics.total_metric,
+        s_total = s_metrics.s_total
+    )
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -122,6 +146,7 @@ extendr_module! {
     fn fof_links_aaron;
     fn fof_links_fast;
     fn create_group_catalog;
+    fn calculate_cost_metrics;
 }
 
 

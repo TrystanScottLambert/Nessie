@@ -3,6 +3,7 @@
 export(FlatCosmology)
 export(RedshiftCatalog)
 export(comoving_distances_at_z)
+export(create_density_function)
 export(fof_links_aaron)
 export(fof_links_fast)
 export(z_at_comoving_distances)

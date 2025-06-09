@@ -110,12 +110,24 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @return A data.frame summarizing group-level statistics.
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
       if (is.null(self$group_ids)) {
-        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`.")
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table` or set the group ids manually.")
       }
       as.data.frame(create_group_catalog(
         self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, velocity_errors,
         self$group_ids, self$cosmology$omega_m, self$cosmology$omega_k, self$cosmology$omega_lambda,
         self$cosmology$hubble_constant))
+    },
+
+    #' @description
+    #' Compares the current group_ids to a mock known grouping ids.
+    #' @param mock_group_ids group ids from the mock catalog. Have to be integers.
+    #' @param singleton_ids the integer id value that is assigned to all singleton galaxies.
+    #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
+    compare_to_mock = function(mock_group_ids, singleton_ids) {
+      if (is.null(self$group_ids)) {
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table` or set the group ids manually.")
+      }
+      return(calculate_cost_metrics(as.integer(self$group_ids), as.integer(mock_group_ids), as.integer(singleton_ids)))
     }
   )
 )

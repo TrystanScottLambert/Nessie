@@ -19,6 +19,7 @@
 #' @param N The total number of data points to interpolate over.
 #'
 #' @return running_density A function which is the rho(z).
+#' @export
 create_density_function <- function(redshifts, total_counts, survey_fractional_area, cosmology, binwidth=40, N = 1e4) {
 
   comoving_distances <- cosmology$comoving_distance(redshifts)

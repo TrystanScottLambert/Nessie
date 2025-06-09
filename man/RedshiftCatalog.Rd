@@ -3,6 +3,9 @@
 \name{RedshiftCatalog}
 \alias{RedshiftCatalog}
 \title{RedshiftCatalog class}
+\value{
+a list containing all the values from equations 9 - 15 in Robotham+2011
+}
 \description{
 A catalog object for redshift-space galaxy data that supports group finding
 using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengths.
@@ -37,6 +40,7 @@ using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengt
 \item \href{#method-RedshiftCatalog-get_raw_groups}{\code{RedshiftCatalog$get_raw_groups()}}
 \item \href{#method-RedshiftCatalog-run_fof}{\code{RedshiftCatalog$run_fof()}}
 \item \href{#method-RedshiftCatalog-calculate_group_table}{\code{RedshiftCatalog$calculate_group_table()}}
+\item \href{#method-RedshiftCatalog-compare_to_mock}{\code{RedshiftCatalog$compare_to_mock()}}
 \item \href{#method-RedshiftCatalog-clone}{\code{RedshiftCatalog$clone()}}
 }
 }
@@ -142,6 +146,25 @@ Generate a summary data.frame of group properties based on assigned group IDs.
 }
 \subsection{Returns}{
 A data.frame summarizing group-level statistics.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RedshiftCatalog-compare_to_mock"></a>}}
+\if{latex}{\out{\hypertarget{method-RedshiftCatalog-compare_to_mock}{}}}
+\subsection{Method \code{compare_to_mock()}}{
+Compares the current group_ids to a mock known grouping ids.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$compare_to_mock(mock_group_ids, singleton_ids)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mock_group_ids}}{group ids from the mock catalog. Have to be integers.}
+
+\item{\code{singleton_ids}}{the integer id value that is assigned to all singleton galaxies.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
