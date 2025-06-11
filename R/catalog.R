@@ -15,6 +15,7 @@ library(R6)
 #' @field group_ids An integer vector storing the resulting group ID for each galaxy (after `run_fof()` is called).
 #' @field current_r0 The most recent `r0` used in `run_fof()`
 #' @field current_b0 The most recent `b0` used in `run_fof()`
+#' @field mock_group_ids The IDs of 'true' groupings from a mock catalogue in the same format at group_ids. Singleton groups need an id of -1. (only used when tuning).
 #'
 #' @export
 RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
@@ -28,7 +29,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     group_ids = NULL,
     current_r0 = NULL,
     current_b0 = NULL,
-
+    mock_group_ids = NULL,
 
     #' @description
     #' Create a new RedshiftCatalog object.
@@ -80,8 +81,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       too_far <- linking_lengths_los > max_los_distances
       linking_lengths_los[too_far] <- max_los_distances[too_far]
 
-      groups <- .find_groups(
-        self$ra_array, self$dec_array, co_dists, linking_lengths_pos, linking_lengths_los)
+      groups <- .find_groups(self$ra_array, self$dec_array, co_dists, linking_lengths_pos, linking_lengths_los)
       return(groups)
     },
 
@@ -104,13 +104,13 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     },
 
     #' @description
-    #' Generate a summary data.frame of group properties based on assigned group IDs.
+    #' Generate a summary data.frame of group properties based on assigned group IDs. Must have run the group finder.
     #' @param absolute_magnitudes A numeric vector of absolute magnitudes per galaxy.
     #' @param velocity_errors A numeric vector of redshift or velocity errors.
     #' @return A data.frame summarizing group-level statistics.
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
       if (is.null(self$group_ids)) {
-        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table` or set the group ids manually.")
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
       }
       as.data.frame(create_group_catalog(
         self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, velocity_errors,
@@ -119,15 +119,22 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     },
 
     #' @description
-    #' Compares the current group_ids to a mock known grouping ids.
-    #' @param mock_group_ids group ids from the mock catalog. Have to be integers.
-    #' @param singleton_ids the integer id value that is assigned to all singleton galaxies.
+    #' Compares the current group_ids to a mock known grouping ids. Must have run the group finder and set both the mock_group_ids and singleton_id
+    #' @details
+        #' This is a wrapper around the `calculate_mock_comparison_metrics` function which is available in Nessie.
+        #' But this is designed to work specifically within the RedshiftCatalog class.
+        #' `run_fof` should be run first. The `mock_group_ids` and `singleton_id` should be set (red_cat$mock_groups_ids = mock_group_ids)
     #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
-    compare_to_mock = function(mock_group_ids, singleton_ids) {
+    compare_to_mock = function() {
       if (is.null(self$group_ids)) {
-        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table` or set the group ids manually.")
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
       }
-      return(calculate_cost_metrics(as.integer(self$group_ids), as.integer(mock_group_ids), as.integer(singleton_ids)))
+
+      if (is.null(self$mock_group_ids)) {
+        stop("No mock group ids found. Be sure to set the comparison mock group id with `$mock_group_ids = ` ")
+      }
+
+      return(calculate_mock_comparison_metrics(self$group_ids, self$mock_group_ids, -1))
     }
   )
 )

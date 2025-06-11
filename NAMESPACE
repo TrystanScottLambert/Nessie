@@ -2,6 +2,10 @@
 
 export(FlatCosmology)
 export(RedshiftCatalog)
+export(bijcheck)
+export(bijcheck_simple)
+export(bijcheck_simple_minus1)
+export(calculate_mock_comparison_metrics)
 export(comoving_distances_at_z)
 export(create_density_function)
 export(fof_links_aaron)

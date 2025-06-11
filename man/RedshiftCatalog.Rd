@@ -30,6 +30,8 @@ using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengt
 \item{\code{current_r0}}{The most recent \code{r0} used in \code{run_fof()}}
 
 \item{\code{current_b0}}{The most recent \code{b0} used in \code{run_fof()}}
+
+\item{\code{mock_group_ids}}{The IDs of 'true' groupings from a mock catalogue in the same format at group_ids. Singleton groups need an id of -1. (only used when tuning).}
 }
 \if{html}{\out{</div>}}
 }
@@ -130,7 +132,7 @@ Singleton galaxies (unlinked) are given group ID -1.
 \if{html}{\out{<a id="method-RedshiftCatalog-calculate_group_table"></a>}}
 \if{latex}{\out{\hypertarget{method-RedshiftCatalog-calculate_group_table}{}}}
 \subsection{Method \code{calculate_group_table()}}{
-Generate a summary data.frame of group properties based on assigned group IDs.
+Generate a summary data.frame of group properties based on assigned group IDs. Must have run the group finder.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$calculate_group_table(absolute_magnitudes, velocity_errors)}\if{html}{\out{</div>}}
 }
@@ -152,20 +154,17 @@ A data.frame summarizing group-level statistics.
 \if{html}{\out{<a id="method-RedshiftCatalog-compare_to_mock"></a>}}
 \if{latex}{\out{\hypertarget{method-RedshiftCatalog-compare_to_mock}{}}}
 \subsection{Method \code{compare_to_mock()}}{
-Compares the current group_ids to a mock known grouping ids.
+Compares the current group_ids to a mock known grouping ids. Must have run the group finder and set both the mock_group_ids and singleton_id
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$compare_to_mock(mock_group_ids, singleton_ids)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$compare_to_mock()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{mock_group_ids}}{group ids from the mock catalog. Have to be integers.}
+\subsection{Details}{
+This is a wrapper around the \code{calculate_mock_comparison_metrics} function which is available in Nessie.
+But this is designed to work specifically within the RedshiftCatalog class.
+\code{run_fof} should be run first. The \code{mock_group_ids} and \code{singleton_id} should be set (red_cat$mock_groups_ids = mock_group_ids)
+}
 
-\item{\code{singleton_ids}}{the integer id value that is assigned to all singleton galaxies.}
-}
-\if{html}{\out{</div>}}
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-RedshiftCatalog-clone"></a>}}

@@ -41,3 +41,15 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
   running_density_z <- approxfun(cosmology$z_at_comoving_dist(kde$x), (total_counts * running_integral)/running_volume, rule = 2)
   return(running_density_z)
 }
+
+
+#' Comparing measured groups to mock catalogue groups
+#' @description
+#' Compares the current group_ids to a mock known grouping ids.
+#' @param mock_group_ids group ids from the mock catalog. Have to be integers.
+#' @param singleton_ids the integer id value that is assigned to all singleton galaxies.
+#' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
+#' @export
+calculate_mock_comparison_metrics <- function(measured_ids, group_ids, singleton_id) {
+  return(calculate_cost_metrics(as.integer(measured_ids), as.integer(group_ids), as.integer(singleton_id)))
+}
