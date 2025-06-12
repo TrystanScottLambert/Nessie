@@ -61,17 +61,12 @@ fof_links_fast <- function(ra_array, dec_array, comoving_distances, linking_leng
 #' @param velocity_errors Array of velocity errors. 
 #' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
 #' @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
+#' @export
 create_group_catalog <- function(ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0) .Call(wrap__create_group_catalog, ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0)
 
-#' Calculating the cost metrics for comparison to mock catalogs. 
-#' @description
-#' This function will compare the measured groups to ones of known grouping (usually from simulations.)
-#' This is done by calculating the metrics defined as equations (9 - 15) in Robotham+2011.
-#' @param measured_groups Array of the group ids as an integer of the measured groups.
-#' @param mock_groups Array of the mock group ids as integers. 
-#' @param singleton_ids the id value that is assigned to the singleton cases (groups of one member). Should be an integer (Usually negative).
-#' @returns A list of the values of equations 9 - 15 in Robotham+2011. 
-calculate_cost_metrics <- function(measured_groups, mock_groups, singleton_id) .Call(wrap__calculate_cost_metrics, measured_groups, mock_groups, singleton_id)
+#' Determines the s score as in Robotham+2011
+#' @export
+calculate_s_score <- function(measured_groups, mock_groups, min_group_size) .Call(wrap__calculate_s_score, measured_groups, mock_groups, min_group_size)
 
 
 # nolint end

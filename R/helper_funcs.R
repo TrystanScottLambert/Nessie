@@ -50,6 +50,6 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 #' @param singleton_ids the integer id value that is assigned to all singleton galaxies.
 #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
 #' @export
-calculate_mock_comparison_metrics <- function(measured_ids, group_ids, singleton_id) {
-  return(calculate_cost_metrics(as.integer(measured_ids), as.integer(group_ids), as.integer(singleton_id)))
+calculate_s_total <- function(measured_ids, group_ids, min_group_size=2) {
+  return(calculate_s_score(as.integer(measured_ids), as.integer(group_ids), as.integer(min_group_size)))
 }

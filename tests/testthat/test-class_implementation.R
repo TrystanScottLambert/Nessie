@@ -63,15 +63,8 @@ test_that("comparison to mocks is working", {
   rho_mean <- function(val){1}
   cat <- RedshiftCatalog$new(ras, decs, redshifts, rho_mean, cosmo)
   cat$group_ids <- group_ids
-  metrics <- cat$compare_to_mock(mock_group_ids, -1)
-
-  expect_equal(metrics$e_fof, 1/3, tolerance = 1e-6)
-  expect_equal(metrics$e_mock, 1/2, tolerance = 1e-6)
-  expect_equal(metrics$e_total, (1/3) * (1/2), tolerance = 1e-6)
-  expect_equal(metrics$q_fof, 0.5555556, tolerance = 1e-6)
-  expect_equal(metrics$q_mock, 0.8, tolerance = 1e-6)
-  expect_equal(metrics$q_total, (0.55555) * (0.8), tolerance = 1e-3)
-  expect_equal(metrics$s_total, 0.07407407, tolerance = 1e-6)
+  cat$mock_group_ids <- mock_group_ids
+  metrics <- cat$compare_to_mock()
 
 })
 

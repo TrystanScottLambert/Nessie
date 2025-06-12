@@ -156,9 +156,16 @@ A data.frame summarizing group-level statistics.
 \subsection{Method \code{compare_to_mock()}}{
 Compares the current group_ids to a mock known grouping ids. Must have run the group finder and set both the mock_group_ids and singleton_id
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$compare_to_mock()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$compare_to_mock(min_group_size = 2)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{min_group_size}}{The minimum size of a group that should be included in the cost metric.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Details}{
 This is a wrapper around the \code{calculate_mock_comparison_metrics} function which is available in Nessie.
 But this is designed to work specifically within the RedshiftCatalog class.

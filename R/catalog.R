@@ -124,8 +124,9 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
         #' This is a wrapper around the `calculate_mock_comparison_metrics` function which is available in Nessie.
         #' But this is designed to work specifically within the RedshiftCatalog class.
         #' `run_fof` should be run first. The `mock_group_ids` and `singleton_id` should be set (red_cat$mock_groups_ids = mock_group_ids)
+    #' @param min_group_size The minimum size of a group that should be included in the cost metric.
     #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
-    compare_to_mock = function() {
+    compare_to_mock = function(min_group_size = 2) {
       if (is.null(self$group_ids)) {
         stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
       }
@@ -134,7 +135,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
         stop("No mock group ids found. Be sure to set the comparison mock group id with `$mock_group_ids = ` ")
       }
 
-      return(calculate_mock_comparison_metrics(self$group_ids, self$mock_group_ids, -1))
+      return(calculate_s_total(self$group_ids, self$mock_group_ids, min_group_size))
     }
   )
 )

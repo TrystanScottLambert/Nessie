@@ -190,6 +190,8 @@ bijcheck_simple_minus1 = function(grefs1, grefs2, groupcut = 2) {
   G1int_num = sum(Q1_values * N1_values)
   G1int_den = sum(N1_values)
 
+
+
   return(list(
     G1bij_num = G1bij_num,
     G1bij_den = G1bij_den,
