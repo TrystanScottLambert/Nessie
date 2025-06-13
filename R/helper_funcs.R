@@ -121,7 +121,7 @@ tune_group_finder <- function(
     return(FoM)
   }
 
-  opt_gama <- Highlander(
+  opt_gama <- Highlander::Highlander(
     c(b0_estimate, r0_estimate),
     Data = list_of_catalogs,
     likefunc = optimal_function,
