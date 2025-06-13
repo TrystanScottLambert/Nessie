@@ -1,3 +1,6 @@
+library(Highlander)
+library(psych)
+
 #' Running density function estimation
 #'
 #' @description
@@ -52,4 +55,86 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 #' @export
 calculate_s_total <- function(measured_ids, group_ids, min_group_size=2) {
   return(calculate_s_score(as.integer(measured_ids), as.integer(group_ids), as.integer(min_group_size)))
+}
+
+#' Tuning the group finder to a mock catalogue to find the optimum b0 and r0.
+#' @description
+#' Uses Highlander(CMA+MCMC fitting) to find the optimum parameters for b0 and r0 given a mock catalogue
+#' or list of mock catalgoues.
+#'
+#' @details
+#' This function will average over all lightcones that are passed to it making it easy to pass
+#' multiple independent lightcones which some users may wish to do to account for cosmic variance.
+#' At the same time, the user can pass a single lightcone if that is all they wish. This function
+#' is already parralized in multiple different ways so the user should not try and parralize it themselves
+#' as this can actually slow the process down significantly. It should scale easily with number of cores.
+#'
+#' This is a helper function and it isn't necessary to use for tuning. Users can define the optimum
+#' parameters in any way they wish. This is just a good approach that should meet most use cases.
+#'
+#' @param list_of_catalogs A list of RedshiftCatalog objects with mock_group_ids already set.
+#' @param minimum_group_size The minim size of groups that should be accounted for when tuning.
+#' @param b0_estimate The initial guess of the b0 linking length
+#' @param r0_estimate The initial fiess of the r0 linking length
+#' @param b0_bounds The lower and upper limits to search for the b0 linking length (e.g. c(0.03, 0.1)).
+#' @param r0_bounds The lower and upper limits to search for the r0 linking length (e.g. c(5, 50)).
+#' @param n_iterations The Number of iterations per CMA and Laplace's Demon respectively. Set to (100, 100)
+#' @param n_final_mcmc The Number of iterations to run for the final MCMC run. Set to 2500
+#' @returns A list of output from `Highlander` containg at least the best parameters of all iterations. See `Highlander` for more details.
+#' @export
+tune_group_finder <- function(
+    list_of_catalogs,
+    minimum_group_size,
+    b0_estimate,
+    r0_estimate,
+    b0_bounds,
+    r0_bounds,
+    n_iterations = c(100, 100),
+    nfinal_mcmc = 2500) {
+
+  optimal_function <- function(par, redshift_catalogues) {
+    b0 <- par[1]
+    r0 <- par[2]
+    message(cat(par))
+    s_totals <- list()
+
+    for (i in seq_along(redshift_catalogues)) {
+      redshift_catalogue <- redshift_catalogues[[i]]
+
+      # Skip if not a RedshiftCatalog
+      if (!inherits(redshift_catalogue, "RedshiftCatalog")) {
+        next
+      }
+
+      redshift_catalogue$run_fof(b0, r0)
+      s_total <- redshift_catalogue$compare_to_mock(min_group_size = minimum_group_size)
+
+      s_totals[[length(s_totals) + 1]] <- s_total
+
+    }
+    FoM <- psych::harmonic.mean(unlist(s_totals))
+    if (is.nan(FoM)) {
+      FoM <- 0
+    }
+    message('LP: ', FoM)
+    message('-----------------')
+    return(FoM)
+  }
+
+  opt_gama <- Highlander(
+    c(b0_estimate, r0_estimate),
+    Data = list_of_catalogs,
+    likefunc = optimal_function,
+    likefunctype = "CMA",
+    optim_iters = 2,
+    liketype = "max",
+    Niters = n_iterations,
+    NfinalMCMC = nfinal_mcmc,
+    lower = c(b0_bounds[1], r0_bounds[1]),
+    upper = c(b0_bounds[2], r0_bounds[2]),
+    parm.names = c("b0", "r0")
+  )
+
+  return(opt_gama)
+
 }

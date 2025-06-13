@@ -1,7 +1,7 @@
 # functions used to test against the previous version
 
-#' @export
-bijcheck = function(grefs1, grefs2, groupcut = 2) {
+# old bijcheck from ICRAR/FoF for testing purposes. Not for use.
+.bijcheck = function(grefs1, grefs2, groupcut = 2) {
   tab1 = table(grefs1[, 2])
   tab2 = table(grefs2[, 2])
   tab1 = cbind(as.numeric(names(tab1)), as.numeric(tab1))
@@ -60,69 +60,10 @@ bijcheck = function(grefs1, grefs2, groupcut = 2) {
                                            int_num = G1int_num, int_den = G1int_den, int = G1int, eff = G1eff)))
 }
 
-#' @export
-bijcheck_simple = function(grefs1, grefs2, groupcut = 2) {
-  # Create frequency tables
-  tab1 = table(grefs1[, 2])
-  tab2 = table(grefs2[, 2])
-  tab1 = cbind(as.numeric(names(tab1)), as.numeric(tab1))
-  tab2 = cbind(as.numeric(names(tab2)), as.numeric(tab2))
 
-  # Filter groups by size threshold
-  tab1 = tab1[tab1[, 2] >= groupcut, ]
-  grefs1 = grefs1[grefs1[, 2] %in% tab1[, 1], ]
-  grefs2 = grefs2[grefs2[, 2] %in% tab2[, 1], ]
-
-  grouplist = sort(unique(grefs1[, 2]))
-
-  # Initialize vectors to store Q1 values and N1 values
-  Q1_values = numeric(length(grouplist))
-  N1_values = numeric(length(grouplist))
-  Q2_values = numeric(length(grouplist))
-
-  for (i in seq_along(grouplist)) {
-    # Find overlapping items between current group and grefs2
-    tempgrps = grefs2[grefs2[, 1] %in% grefs1[grefs1[, 2] == grouplist[i], 1], 2]
-
-    if (length(tempgrps) > 0) {
-      temptab = table(tempgrps)
-      temptab = cbind(as.numeric(names(temptab)), as.numeric(temptab))
-
-      # Calculate fractions
-      N1_current = tab1[tab1[, 1] == grouplist[i], 2]
-      frac1 = temptab[, 2] / N1_current
-      frac2 = temptab[, 2] / tab2[tab2[, 1] %in% temptab[, 1], 2]
-
-      # Find best match
-      comb = frac1 * frac2
-      bestloc = which.max(comb)
-
-      Q1_values[i] = frac1[bestloc]
-      Q2_values[i] = frac2[bestloc]
-    } else {
-      Q1_values[i] = 0
-      Q2_values[i] = 0
-    }
-
-    N1_values[i] = tab1[tab1[, 1] == grouplist[i], 2]
-  }
-
-  # Calculate the four required values
-  G1bij_num = sum(Q1_values > 0.5 & Q2_values > 0.5)
-  G1bij_den = length(N1_values)
-  G1int_num = sum(Q1_values * N1_values)
-  G1int_den = sum(N1_values)
-
-  return(list(
-    G1bij_num = G1bij_num,
-    G1bij_den = G1bij_den,
-    G1int_num = G1int_num,
-    G1int_den = G1int_den
-  ))
-}
-
-#' @export
-bijcheck_simple_minus1 = function(grefs1, grefs2, groupcut = 2) {
+# Same as above except using only returning the values we care about. And assuming singleton = -1
+# Here for testing purposes. Not for use.
+.bijcheck_simple_minus1 = function(grefs1, grefs2, groupcut = 2) {
   # Create frequency tables (this will automatically exclude -1 values)
   tab1 = table(grefs1[grefs1 != -1])
   tab2 = table(grefs2[grefs2 != -1])

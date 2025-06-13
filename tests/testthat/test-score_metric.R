@@ -14,7 +14,6 @@ test_that("score is the same as the old code", {
   red_cat <- RedshiftCatalog$new(g09_lightcone$ra, g09_lightcone$dec, g09_lightcone$zobs, g09_rho_mean, cosmo)
   red_cat$mock_group_ids <- g09_lightcone$GroupID
 
-
   b0 <- 0.05
   r0 <- 18
   ### old method
@@ -28,12 +27,12 @@ test_that("score is the same as the old code", {
 
   start.now <- Sys.time()
   mock_grefs <- cbind(seq_along(g09_lightcone$ra), g09_lightcone$GroupID)
-  mock_t <- bijcheck(mock_grefs, fullgroup, groupcut = 2)
-  fof_t <- bijcheck(fullgroup, mock_grefs, groupcut = 2)
+  mock_t <- .bijcheck(mock_grefs, fullgroup, groupcut = 2)
+  fof_t <- .bijcheck(fullgroup, mock_grefs, groupcut = 2)
   score <- (fof_t$summary['bij'] * mock_t$summary['bij']) * (fof_t$summary['int'] * mock_t$summary['int'])
 
-  mock_t <- bijcheck(mock_grefs, fullgroup, groupcut = 3)
-  fof_t <- bijcheck(fullgroup, mock_grefs, groupcut = 3)
+  mock_t <- .bijcheck(mock_grefs, fullgroup, groupcut = 3)
+  fof_t <- .bijcheck(fullgroup, mock_grefs, groupcut = 3)
   score_3 <- (fof_t$summary['bij'] * mock_t$summary['bij']) * (fof_t$summary['int'] * mock_t$summary['int'])
   end.now <- Sys.time()
   print(end.now - start.now)
@@ -45,15 +44,11 @@ test_that("score is the same as the old code", {
   red_cat$mock_group_ids <- ifelse(ids %in% singleton_ids, -1, ids)
   red_cat$run_fof(b0, r0)
   start.now <- Sys.time()
-  #score_me <- calcualte_s_score(as.integer(red_cat$group_ids), as.integer(red_cat$mock_group_ids), 2)
   score_me <- red_cat$compare_to_mock()
   end.now <- Sys.time()
   print(end.now - start.now)
 
-
   expect_equal(score_me, as.numeric(score), tolerance = 1e-5)
   expect_equal(red_cat$compare_to_mock(3), as.numeric(score_3), tolerance = 1e-5)
-
-
 
 })
