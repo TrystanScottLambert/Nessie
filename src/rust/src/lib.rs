@@ -17,12 +17,29 @@ use crate::link_finder::{ffl1, fast_ffl1_parallel};
 use crate::bij::s_score;
 
 
+/// Calculate the hubble constant at different redshifts.
+/// @param redshift_array an array of multiple redshift values.
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param hubble_constant H0 = 100 * h.
+/// @returns Multiple H(z) for different z.
+/// @export
+#[extendr]
+fn h_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
+    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
+    redshift_array
+        .par_iter()
+        .map(|z| cosmo.h_at_z(*z))
+        .collect()
+}
+
 /// Calculates multiple comoving distances for multiple redshifts.
 /// @param redshift_array an array of multiple redshift values.
-/// @param omega_m Mass density (often 0.3 in LCDM)
-/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM)
-/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM)
-/// @param hubble_constant H0 = 100 * h
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param hubble_constant H0 = 100 * h.
 /// @return multiple comoving distance in Mpc.
 /// @export
 #[extendr]
@@ -35,7 +52,12 @@ fn comoving_distances_at_z(redshift_array: Vec<f64>, omega_m:f64, omega_k:f64, o
 }
 
 
-/// redshift at some given comoving distances in Mpc
+/// Redshift at some given comoving distances in Mpc.
+/// @param redshift_array an array of multiple redshift values.
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param hubble_constant H0 = 100 * h.
 /// @export
 #[extendr]
 fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
@@ -45,6 +67,41 @@ fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omeg
         .map(|d| cosmo.inverse_codist(*d))
         .collect()
 }
+
+/// Calculate the Rvir from a given mass for a range of redshift values.
+/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+/// @param redshift_array an array of multiple redshift values.
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param hubble_constant H0 = 100 * h.
+/// @export
+#[extendr]
+fn calculate_max_rvirs(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m:f64, omega_k:f64, omega_l:f64, h0: f64) -> Vec<f64> {
+    let cosmo =  Cosmology {omega_m, omega_k, omega_l, h0};
+    redshift_array
+        .par_iter()
+        .map(|z| cosmo.mvir_to_rvir(max_solar_mass, *z))
+        .collect()
+}
+
+/// Calculate the Sigma from a given mass for a range of redshift values.
+/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+/// @param redshift_array an array of multiple redshift values.
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param hubble_constant H0 = 100 * h.
+/// @export
+#[extendr]
+fn calculate_max_sigmas(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m:f64, omega_k:f64, omega_l:f64, h0: f64) -> Vec<f64> {
+    let cosmo =  Cosmology {omega_m, omega_k, omega_l, h0};
+    redshift_array
+        .par_iter()
+        .map(|z| cosmo.mvir_to_sigma(max_solar_mass, *z))
+        .collect()
+}
+
 
 
 /// finding the links between all galaxies in a brute force way.
@@ -130,6 +187,9 @@ extendr_module! {
     mod Nessie;
     fn comoving_distances_at_z;
     fn z_at_comoving_distances;
+    fn h_at_z;
+    fn calculate_max_rvirs;
+    fn calculate_max_sigmas;
     fn fof_links_aaron;
     fn fof_links_fast;
     fn create_group_catalog;
