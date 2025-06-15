@@ -65,6 +65,6 @@ test_that("comparison to mocks is working", {
   cat$group_ids <- group_ids
   cat$mock_group_ids <- mock_group_ids
   metrics <- cat$compare_to_mock()
-
+  expect_equal(metrics, 0.1111, tolerance=1e-3)
 })
 
