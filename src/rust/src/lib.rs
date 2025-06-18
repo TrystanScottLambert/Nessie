@@ -13,7 +13,7 @@ pub mod bij;
 
 use crate::cosmology_funcs::Cosmology;
 use crate::group_properties::GroupedGalaxyCatalog;
-use crate::link_finder::{ffl1, fast_ffl1_parallel};
+use crate::link_finder::{ffl1, fast_ffl1_parallel}; //fast_ffl1_parallel
 use crate::bij::s_score;
 
 

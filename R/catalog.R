@@ -80,7 +80,6 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       max_los_distances <- self$cosmology$velocity_dispersion(max_stellar_mass, self$redshift_array) * (1 + self$redshift_array) / self$cosmology$h0_grow(self$redshift_array)
       too_far <- linking_lengths_los > max_los_distances
       linking_lengths_los[too_far] <- max_los_distances[too_far]
-
       groups <- .find_groups(self$ra_array, self$dec_array, co_dists, linking_lengths_pos, linking_lengths_los)
       return(groups)
     },

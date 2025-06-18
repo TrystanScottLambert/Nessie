@@ -1,6 +1,3 @@
-
-
-use kiddo::{KdTree, SquaredEuclidean};
 use rayon::prelude::*;
 
 use crate::spherical_trig_funcs::convert_equitorial_to_cartesian;
@@ -72,8 +69,6 @@ pub fn ffl1(
     ind
 }
 
-
-
 pub fn fast_ffl1(
     ra_array: Vec<f64>,
     dec_array: Vec<f64>,
@@ -120,6 +115,109 @@ pub fn fast_ffl1(
     }
     ind
 }
+
+
+
+
+
+pub fn fast_ffl1_with_spatial_grid(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> Vec<(usize, usize)> {
+    let n = ra_array.len();
+    
+    // Convert coordinates
+    let coords: Vec<[f64; 3]> = (0..n)
+        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
+        .collect();
+
+    // Create spatial grid
+    let max_pos_ll = linking_lengths_pos.iter().cloned().fold(f64::NAN, f64::max);
+    let grid_size = max_pos_ll * 2.0; // Adjust based on your data
+    
+    // Build spatial hash map
+    let mut spatial_grid: std::collections::HashMap<(i32, i32, i32), Vec<usize>> = 
+        std::collections::HashMap::new();
+    
+    for (i, coord) in coords.iter().enumerate() {
+        let grid_x = (coord[0] / grid_size).floor() as i32;
+        let grid_y = (coord[1] / grid_size).floor() as i32;
+        let grid_z = (coord[2] / grid_size).floor() as i32;
+        
+        spatial_grid.entry((grid_x, grid_y, grid_z))
+            .or_default()
+            .push(i);
+    }
+
+    // Sort by comoving distance
+    let mut sorted_indices: Vec<usize> = (0..n).collect();
+    sorted_indices.sort_unstable_by(|&i, &j| {
+        comoving_distances[i].partial_cmp(&comoving_distances[j]).unwrap()
+    });
+
+    let max_los_ll = linking_lengths_los.iter().cloned().fold(f64::NAN, f64::max);
+
+    // Process in parallel
+    let results: Vec<(usize, usize)> = (0..n)
+        .into_par_iter()
+        .flat_map(|i| {
+            let mut local_results = Vec::new();
+            
+            // Get grid cell for particle i
+            let grid_x = (coords[i][0] / grid_size).floor() as i32;
+            let grid_y = (coords[i][1] / grid_size).floor() as i32;
+            let grid_z = (coords[i][2] / grid_size).floor() as i32;
+            
+            // Check neighboring grid cells
+            for dx in -1..=1 {
+                for dy in -1..=1 {
+                    for dz in -1..=1 {
+                        let key = (grid_x + dx, grid_y + dy, grid_z + dz);
+                        if let Some(neighbors) = spatial_grid.get(&key) {
+                            for &j in neighbors {
+                                if j == i {
+                                    continue;
+                                }
+                                
+                                // Quick comoving distance pre-filter using max_los_ll
+                                let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
+                                if zrad > max_los_ll {
+                                    continue;
+                                }
+                                
+                                // Precise line-of-sight check
+                                let los_ll = 0.5 * (linking_lengths_los[i] + linking_lengths_los[j]);
+                                if zrad > los_ll {
+                                    continue;
+                                }
+                                
+                                // Spatial distance check
+                                let radproj2 = (coords[i][0] - coords[j][0]).powi(2)
+                                    + (coords[i][1] - coords[j][1]).powi(2)
+                                    + (coords[i][2] - coords[j][2]).powi(2);
+                                
+                                let bgal2 = 0.5 * (linking_lengths_pos[i] + linking_lengths_pos[j]);
+                                let bgal2 = bgal2 * bgal2;
+                                
+                                if radproj2 <= bgal2 {
+                                    local_results.push((i, j));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            local_results
+        })
+        .collect();
+
+    results
+}
+
 
 
 pub fn fast_ffl1_parallel(
@@ -184,96 +282,6 @@ pub fn fast_ffl1_parallel(
 
 
 
-struct SkyCatalog {
-    tree: KdTree<f64, 3>,
-}
-
-impl SkyCatalog {
-    /// Create a new catalog from sky coordinates
-    pub fn new(cartesian_coords: Vec<[f64; 3]>) -> Self {
-        let mut tree = KdTree::new();
-        
-        for (i, coord) in cartesian_coords.iter().enumerate() {
-            tree.add(&[coord[0], coord[1], coord[2]], i as u64);
-        }
-        Self { tree }
-    }
-
-    /// Search for all coordinates within a given angular distance of a specific coordinate
-    /// 
-    /// # Arguments
-    /// * `index` - Index of the coordinate to search around
-    /// * `radius_deg` - Search radius in degrees
-    /// 
-    /// # Returns
-    /// * Vector of indices of coordinates within the search radius (excluding the query coordinate itself)
-    pub fn search_around(&self, query_point: [f64; 3], projected_distance: f64) -> Vec<usize> {
-
-        // Find all points within the chord distance
-        let neighbors = self.tree.within::<SquaredEuclidean>(&query_point, projected_distance);
-        // Filter out the query point itself and return just the indices
-        neighbors
-            .into_iter()
-            .map(|neighbor| neighbor.item)
-            .map(|idx| idx as usize)
-            .collect()
-    }
-}
-
-#[allow(dead_code)]
-// experiment trying to use kd-tree for angular search speed up.
-fn fast_ffl1_tree(
-    ra_array: Vec<f64>,
-    dec_array: Vec<f64>,
-    comoving_distances: Vec<f64>,
-    linking_lengths_pos: Vec<f64>,
-    linking_lengths_los: Vec<f64>,
-) -> Vec<(usize, usize)> {
-    let n = ra_array.len();
-
-    // Convert (RA, Dec, dist) to 3D Cartesian coordinates
-    let coords: Vec<[f64; 3]> = (0..n)
-        .map(|i| convert_equitorial_to_cartesian(&ra_array[i], &dec_array[i]))
-        .collect();
-    
-    let max_los_ll = linking_lengths_los.iter().cloned().fold(f64::NAN, f64::max);
-    let max_pos_ll = linking_lengths_pos.iter().cloned().fold(f64::NAN, f64::max);
-    let mut sorted_distances = comoving_distances.clone();
-    sorted_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let dist_argsort = argsort(&comoving_distances);
-
-    let mut ind = Vec::new();
-
-    for i in 0..(n - 1) {
-        let dist_i = comoving_distances[i];
-        let lower_lim = dist_i - max_los_ll;
-        let upper_lim = dist_i + max_los_ll;
-        let possible_los_idx = find_indices_in_range(&sorted_distances, &dist_argsort, lower_lim, upper_lim, i);
-        
-        let possible_coords: Vec<[f64; 3]> = possible_los_idx.clone().into_iter().map(|idx| *coords.get(idx).unwrap()).collect();
-        let local_tree = SkyCatalog::new(possible_coords.clone());
-        let possible_local_idx = local_tree.search_around(coords[i], max_pos_ll);
-        let search_idx: Vec<usize> = possible_local_idx.iter().map(|&idx| possible_los_idx[idx]).collect();
-
-        for j in search_idx {
-            let average_los_ll = (linking_lengths_los[i] + linking_lengths_los[j]) * 0.5;
-            let zrad = (comoving_distances[i] - comoving_distances[j]).abs();
-
-            if zrad <= average_los_ll {
-                let bgal2 = ((linking_lengths_pos[i] + linking_lengths_pos[j]) * 0.5).powi(2);
-
-                let radproj = (0..3)
-                    .map(|k| (coords[i][k] - coords[j][k]).powi(2))
-                    .sum::<f64>();
-
-                if radproj <= bgal2 {
-                    ind.push((i, j));
-                }
-            }
-        }
-    }
-    ind
-}
 
 #[cfg(test)]
 mod tests {
