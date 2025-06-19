@@ -1,5 +1,4 @@
 library(Highlander)
-library(psych)
 
 #' Running density function estimation
 #'
@@ -114,7 +113,7 @@ tune_group_finder <- function(
       s_totals[[length(s_totals) + 1]] <- s_total
 
     }
-    FoM <- psych::harmonic.mean(unlist(s_totals))
+    FoM <- calculate_harmonic_mean(unlist(s_totals))
     if (is.nan(FoM)) {
       FoM <- 0
     }

@@ -41,12 +41,8 @@ Nessie should now be installed as an R package.
 
 The `R6` and `igraph` packages are required and should have been installed automatically. However, they are easy to install with `install.packages('R6')` and `install.packages('igraph')` respectively.
 
-Although not required for the core group finding functionality, both `psych` and `Highlander` are needed for tuning the group finder to a known mock catalogue.
+Although not required for the core group finding functionality, `Highlander` is needed for tuning the group finder to a known mock catalogue.
 
-```r
-install.packages('psych')
-
-```
 
 ```r
 devtools::install_github('asgr/Highlander')

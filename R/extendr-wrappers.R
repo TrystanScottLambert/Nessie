@@ -103,5 +103,11 @@ create_group_catalog <- function(ra, dec, redshift, absolute_magnitudes, velocit
 #' @export
 calculate_s_score <- function(measured_groups, mock_groups, min_group_size) .Call(wrap__calculate_s_score, measured_groups, mock_groups, min_group_size)
 
+#' The Harmoic Mean
+#' @param values The array of objects of which to find the harmonic mean
+#' @returns The harmonic mean.
+#' @export
+calculate_harmonic_mean <- function(values) .Call(wrap__calculate_harmonic_mean, values)
+
 
 # nolint end

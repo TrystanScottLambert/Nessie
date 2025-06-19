@@ -15,6 +15,7 @@ use crate::cosmology_funcs::Cosmology;
 use crate::group_properties::GroupedGalaxyCatalog;
 use crate::link_finder::{ffl1, fast_ffl1_parallel}; //fast_ffl1_parallel
 use crate::bij::s_score;
+use crate::helper_funcs::harmonic_mean;
 
 
 /// Calculate the hubble constant at different redshifts.
@@ -103,7 +104,6 @@ fn calculate_max_sigmas(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m:f6
 }
 
 
-
 /// finding the links between all galaxies in a brute force way.
 /// @description
 /// `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
@@ -180,6 +180,15 @@ fn calculate_s_score(measured_groups: &[i32], mock_groups: &[i32], min_group_siz
     s_score(measured_groups, mock_groups, min_group_size)
 }
 
+/// The Harmoic Mean
+/// @param values The array of objects of which to find the harmonic mean
+/// @returns The harmonic mean.
+/// @export
+#[extendr]
+fn calculate_harmonic_mean(values: Vec<f64>) -> f64 {
+    harmonic_mean(values)
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -194,6 +203,7 @@ extendr_module! {
     fn fof_links_fast;
     fn create_group_catalog;
     fn calculate_s_score;
+    fn calculate_harmonic_mean;
 }
 
 

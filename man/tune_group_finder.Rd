@@ -12,7 +12,8 @@ tune_group_finder(
   b0_bounds,
   r0_bounds,
   n_iterations = c(100, 100),
-  nfinal_mcmc = 2500
+  nfinal_mcmc = 2500,
+  scaling = c(1, 1)
 )
 }
 \arguments{
@@ -30,10 +31,12 @@ tune_group_finder(
 
 \item{n_iterations}{The Number of iterations per CMA and Laplace's Demon respectively. Set to (100, 100)}
 
+\item{scaling}{Scales the b0 and r0 values respectively. Sometimes this is easier for \code{Highlander} when b0 and r0 are similar scales.}
+
 \item{n_final_mcmc}{The Number of iterations to run for the final MCMC run. Set to 2500}
 }
 \value{
-A list of output from \code{Highlander} containg at least the best parameters of all iterations. See \code{Highlander} for more details.
+A list of output from \code{Highlander} containing at least the best parameters of all iterations. See \code{Highlander} for more details.
 }
 \description{
 Uses Highlander(CMA+MCMC fitting) to find the optimum parameters for b0 and r0 given a mock catalogue

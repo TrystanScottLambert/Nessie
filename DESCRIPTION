@@ -11,7 +11,6 @@ RoxygenNote: 7.3.2
 Config/rextendr/version: 0.3.1
 Imports:
     R6,
-    igraph
 Suggests:
     Highlander,
     psych,

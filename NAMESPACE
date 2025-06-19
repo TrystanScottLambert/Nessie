@@ -2,6 +2,7 @@
 
 export(FlatCosmology)
 export(RedshiftCatalog)
+export(calculate_harmonic_mean)
 export(calculate_max_rvirs)
 export(calculate_max_sigmas)
 export(calculate_s_score)
