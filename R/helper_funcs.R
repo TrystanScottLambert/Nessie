@@ -80,7 +80,8 @@ calculate_s_total <- function(measured_ids, group_ids, min_group_size=2) {
 #' @param r0_bounds The lower and upper limits to search for the r0 linking length (e.g. c(5, 50)).
 #' @param n_iterations The Number of iterations per CMA and Laplace's Demon respectively. Set to (100, 100)
 #' @param n_final_mcmc The Number of iterations to run for the final MCMC run. Set to 2500
-#' @returns A list of output from `Highlander` containg at least the best parameters of all iterations. See `Highlander` for more details.
+#' @param scaling Scales the b0 and r0 values respectively. Sometimes this is easier for `Highlander` when b0 and r0 are similar scales.
+#' @returns A list of output from `Highlander` containing at least the best parameters of all iterations. See `Highlander` for more details.
 #' @export
 tune_group_finder <- function(
     list_of_catalogs,
@@ -90,11 +91,12 @@ tune_group_finder <- function(
     b0_bounds,
     r0_bounds,
     n_iterations = c(100, 100),
-    nfinal_mcmc = 2500) {
+    nfinal_mcmc = 2500,
+    scaling = c(1, 1)) {
 
   optimal_function <- function(par, redshift_catalogues) {
-    b0 <- par[1]/100
-    r0 <- par[2]
+    b0 <- par[1]/scaling[1]
+    r0 <- par[2]/scaling[2]
     message(cat(par))
     s_totals <- list()
 
@@ -122,7 +124,7 @@ tune_group_finder <- function(
   }
 
   opt_gama <- Highlander::Highlander(
-    c(b0_estimate*100, r0_estimate),
+    c(b0_estimate * scaling[1], r0_estimate * scaling[2]),
     Data = list_of_catalogs,
     likefunc = optimal_function,
     likefunctype = "CMA",
@@ -130,8 +132,8 @@ tune_group_finder <- function(
     liketype = "max",
     Niters = n_iterations,
     NfinalMCMC = nfinal_mcmc,
-    lower = c(b0_bounds[1]*100, r0_bounds[1]),
-    upper = c(b0_bounds[2]*100, r0_bounds[2]),
+    lower = c(b0_bounds[1] * scaling[1], r0_bounds[1] * scaling[2]),
+    upper = c(b0_bounds[2] * scaling[1], r0_bounds[2] * scaling[2]),
     parm.names = c("b0", "r0")
   )
 
