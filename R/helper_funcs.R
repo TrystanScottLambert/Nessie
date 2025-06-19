@@ -93,7 +93,7 @@ tune_group_finder <- function(
     nfinal_mcmc = 2500) {
 
   optimal_function <- function(par, redshift_catalogues) {
-    b0 <- par[1]
+    b0 <- par[1]/100
     r0 <- par[2]
     message(cat(par))
     s_totals <- list()
@@ -122,7 +122,7 @@ tune_group_finder <- function(
   }
 
   opt_gama <- Highlander::Highlander(
-    c(b0_estimate, r0_estimate),
+    c(b0_estimate*100, r0_estimate),
     Data = list_of_catalogs,
     likefunc = optimal_function,
     likefunctype = "CMA",
@@ -130,8 +130,8 @@ tune_group_finder <- function(
     liketype = "max",
     Niters = n_iterations,
     NfinalMCMC = nfinal_mcmc,
-    lower = c(b0_bounds[1], r0_bounds[1]),
-    upper = c(b0_bounds[2], r0_bounds[2]),
+    lower = c(b0_bounds[1]*100, r0_bounds[1]),
+    upper = c(b0_bounds[2]*100, r0_bounds[2]),
     parm.names = c("b0", "r0")
   )
 
