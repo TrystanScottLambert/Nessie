@@ -45,6 +45,14 @@ FlatCosmology <- R6::R6Class("FlatCosmology",
      },
 
      #' @description
+     #' Compute the distance modulus for a vector of redshifts.
+     #' @param redshift A numeric vector of redshifts.
+     #' @return A numeric vector of distance moduli.
+     dist_mod = function(redshift) {
+       return(distance_modulus(redshift, self$omega_m, self$omega_k, self$omega_lambda, self$hubble_constant))
+     },
+
+     #' @description
      #' Compute redshift values corresponding to comoving distances.
      #' @param co_dist A numeric vector of comoving distances (in Mpc).
      #' @return A numeric vector of redshifts.

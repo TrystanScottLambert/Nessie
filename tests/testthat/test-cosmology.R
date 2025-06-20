@@ -28,3 +28,11 @@ test_that("hubble grow matches celestial", {
   answer <- celestial::cosgrowH(H0 = cosmo$hubble_constant, z = redshift, OmegaM = cosmo$omega_m)
   expect_equal(result, answer)
 })
+
+test_that("distance modulus matches celestial", {
+  cosmo <- FlatCosmology$new(1, 0.3)
+  redshifts <- c(0.1, 0.2, 0.5, 4, 2, 1, 0, 0.2445)
+  answers <- celestial::cosdistDistMod(redshifts)
+  results <- cosmo$dist_mod(redshifts)
+  expect_equal(answers, results)
+})

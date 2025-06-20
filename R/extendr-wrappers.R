@@ -15,7 +15,7 @@ NULL
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
 #' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
-#' @param hubble_constant H0 = 100 * h.
+#' @param h0 H0 = 100 * h.
 #' @return multiple comoving distance in Mpc.
 #' @export
 comoving_distances_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__comoving_distances_at_z, redshift_array, omega_m, omega_k, omega_l, h0)
@@ -25,16 +25,26 @@ comoving_distances_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
 #' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
-#' @param hubble_constant H0 = 100 * h.
+#' @param h0 H0 = 100 * h.
 #' @export
 z_at_comoving_distances <- function(distances, omega_m, omega_k, omega_l, h0) .Call(wrap__z_at_comoving_distances, distances, omega_m, omega_k, omega_l, h0)
+
+#' Distance modulus.
+#' @param redshift_array an array of multiple redshift values.
+#' @param omega_m Mass density (often 0.3 in LCDM).
+#' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+#' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+#' @param h0 H0 = 100 * h.
+#' @returns The distance modulus for the given array of redshifts.
+#' @export
+distance_modulus <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__distance_modulus, redshift_array, omega_m, omega_k, omega_l, h0)
 
 #' Calculate the hubble constant at different redshifts.
 #' @param redshift_array an array of multiple redshift values.
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
 #' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
-#' @param hubble_constant H0 = 100 * h.
+#' @param h0 H0 = 100 * h.
 #' @returns Multiple H(z) for different z.
 #' @export
 h_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__h_at_z, redshift_array, omega_m, omega_k, omega_l, h0)
@@ -45,7 +55,7 @@ h_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__h_
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
 #' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
-#' @param hubble_constant H0 = 100 * h.
+#' @param h0 H0 = 100 * h.
 #' @export
 calculate_max_rvirs <- function(max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__calculate_max_rvirs, max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0)
 
@@ -55,7 +65,7 @@ calculate_max_rvirs <- function(max_solar_mass, redshift_array, omega_m, omega_k
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
 #' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
-#' @param hubble_constant H0 = 100 * h.
+#' @param h0 H0 = 100 * h.
 #' @export
 calculate_max_sigmas <- function(max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__calculate_max_sigmas, max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0)
 

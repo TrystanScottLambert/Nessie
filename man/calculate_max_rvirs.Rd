@@ -24,7 +24,7 @@ calculate_max_rvirs(
 
 \item{omega_l}{Effective mass density of dark energy (often 0.7 in LCDM).}
 
-\item{hubble_constant}{H0 = 100 * h.}
+\item{h0}{H0 = 100 * h.}
 }
 \description{
 Calculate the Rvir from a given mass for a range of redshift values.

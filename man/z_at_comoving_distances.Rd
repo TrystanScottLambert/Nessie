@@ -13,9 +13,9 @@ z_at_comoving_distances(distances, omega_m, omega_k, omega_l, h0)
 
 \item{omega_l}{Effective mass density of dark energy (often 0.7 in LCDM).}
 
-\item{redshift_array}{an array of multiple redshift values.}
+\item{h0}{H0 = 100 * h.}
 
-\item{hubble_constant}{H0 = 100 * h.}
+\item{redshift_array}{an array of multiple redshift values.}
 }
 \description{
 Redshift at some given comoving distances in Mpc.

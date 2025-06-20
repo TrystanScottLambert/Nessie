@@ -113,6 +113,8 @@ impl Cosmology {
 
 #[cfg(test)]
 mod tests {
+    use std::iter::zip;
+
     use super::*;
 
     #[test]
@@ -230,6 +232,18 @@ mod tests {
         let result = cosmo.mvir_to_sigma(solar_mass, z);
         let answer = 242.07541;
         assert!((result - answer).abs() < 1e-5);
+    }
+
+    #[test]
+    fn testing_distance_modulus() {
+        // Comparing this calculation to celestials distance modulus.
+        let cosmo = Cosmology {omega_m: 0.3, omega_k: 0., omega_l: 0.7, h0:100.};
+        let redshifts = [0.1, 0.2, 0.3, 1., 2., 4.];
+        let answers = [37.54069, 39.18177, 40.18095, 43.32573, 45.18269, 46.99805];
+        let results: Vec<f64> = redshifts.iter().map(|&z| cosmo.distance_modulus(z)).collect();
+        for (r, a) in zip(results, answers) {
+            assert!((r - a).abs() < 1e-5)
+        }
     }
 
 

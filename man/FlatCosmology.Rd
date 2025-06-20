@@ -29,6 +29,7 @@ comoving distances, virial radii, velocity dispersions, and Hubble evolution.
 \itemize{
 \item \href{#method-FlatCosmology-new}{\code{FlatCosmology$new()}}
 \item \href{#method-FlatCosmology-comoving_distance}{\code{FlatCosmology$comoving_distance()}}
+\item \href{#method-FlatCosmology-dist_mod}{\code{FlatCosmology$dist_mod()}}
 \item \href{#method-FlatCosmology-z_at_comoving_dist}{\code{FlatCosmology$z_at_comoving_dist()}}
 \item \href{#method-FlatCosmology-virial_radius}{\code{FlatCosmology$virial_radius()}}
 \item \href{#method-FlatCosmology-velocity_dispersion}{\code{FlatCosmology$velocity_dispersion()}}
@@ -73,6 +74,26 @@ Compute comoving distances for a vector of redshifts.
 }
 \subsection{Returns}{
 A numeric vector of comoving distances (in Mpc).
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlatCosmology-dist_mod"></a>}}
+\if{latex}{\out{\hypertarget{method-FlatCosmology-dist_mod}{}}}
+\subsection{Method \code{dist_mod()}}{
+Compute the distance modulus for a vector of redshifts.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlatCosmology$dist_mod(redshift)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{redshift}}{A numeric vector of redshifts.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A numeric vector of distance moduli.
 }
 }
 \if{html}{\out{<hr>}}
