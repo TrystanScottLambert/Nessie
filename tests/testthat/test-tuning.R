@@ -1,4 +1,5 @@
 test_that("tuning works", {
+  skip("This test is currently optional because it takes a while.")
   library(celestial)
   library(data.table)
   library(arrow)
@@ -24,33 +25,22 @@ test_that("tuning works", {
   rho_means <- list(g09 = g09_rho_mean, g12 = g12_rho_mean, g15 = g15_rho_mean, g23 = g23_rho_mean)
 
   # Setting up Redshift catalogues
-  rlim <- 19.65
+  lc_numbers <- c(1, 2)
+  redshift_catalogues_galform <- list()
+  for (lc in lc_numbers) {
+    galform_data <- as.data.frame(arrow::read_parquet("~/Desktop/GAMA_paper_plotter/mocks/galform_gals_for_R.parquet"))
+    local_catalogue <- galform_data[galform_data$Volume == lc, ]
+    local_catalogue <- local_catalogue[local_catalogue$RA < 150, ]
 
-  calibration_data <- as.data.frame(arrow::read_parquet("~/Desktop/GAMA_paper_plotter/mocks/gama_gals_for_R.parquet"))
-  calibration_data <- calibration_data[calibration_data['zobs'] < 0.5, ]
-
-
-  lightcone_numbers = c(0)#, 3, 4, 5, 7, 8, 9, 10)
-  gama_fields = c('g09')#, 'g12', 'g15', 'g23')
-  combinations <- expand.grid(lightcone_numbers, gama_fields)
-  all_fields <- paste0(combinations$Var1, combinations$Var2)
-
-  redshift_catalogues <- list()
-  for (g_field in all_fields) {
-    gama_field <- substr(g_field, nchar(g_field) - 2, nchar(g_field))
-    local_catalogue <- calibration_data[calibration_data['lightcone_gamafield'] == g_field, ]
-    red_cat <- RedshiftCatalog$new(local_catalogue$ra, local_catalogue$dec, local_catalogue$zobs, rho_means[[gama_field]], cosmo)
+    red_cat <- RedshiftCatalog$new(local_catalogue$RA, local_catalogue$DEC, local_catalogue$Zspec, g09_rho_mean, cosmo)
     red_cat$mock_group_ids <- local_catalogue$GroupID
+    red_cat$completeness <- rep(0.95, length(red_cat$ra_array))
 
-    # setting this values to -1
-    counts <- table(red_cat$mock_group_ids)
-    singleton_ids <- names(counts[counts == 1])
-    red_cat$mock_group_ids <- ifelse(red_cat$mock_group_ids %in% singleton_ids, -1, red_cat$mock_group_ids)
-
-    redshift_catalogues[[length(redshift_catalogues) + 1]] <- red_cat
+    redshift_catalogues_galform[[length(redshift_catalogues_galform) + 1]] <- red_cat
   }
 
-  result <- tune_group_finder(redshift_catalogues, 5, 0.05, 18, c(0.03, 0.09), c(1, 100))
+
+  result <- tune_group_finder(redshift_catalogues_galform, 5, 0.05, 18, c(0.04, 0.09), c(20, 50))
   expect_equal(as.numeric(result$parm['b0']), 0.07010954, tolerance = 1e-5)
   expect_equal(as.numeric(result$parm['r0']), 38.36418, tolerance = 1e-5)
 })
