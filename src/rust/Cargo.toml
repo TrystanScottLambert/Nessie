@@ -8,13 +8,6 @@ crate-type = [ 'staticlib' ]
 name = 'Nessie'
 
 [dependencies]
-cdshealpix = "0.7.3"
 extendr-api = '*'
 fof = "0.1.2"
-integrate = "0.1.11"
-kiddo = "5.0.3"
-libm = "0.2.15"
-ndarray = "0.16.1"
 rayon = "1.10.0"
-roots = "0.0.8"
-streaming-stats = "0.2.3"
