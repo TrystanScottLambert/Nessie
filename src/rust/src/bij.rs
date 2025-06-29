@@ -144,7 +144,6 @@ pub fn bijcheck(group_ids_1: &[i32], group_ids_2: &[i32], min_group_size: usize)
         .sum();
 
     let q_den: f64 = n1_values.iter().sum();
-
     BijResults {
         e_num,
         e_den,
@@ -160,5 +159,7 @@ pub fn s_score(measured_groups: &[i32], mock_groups: &[i32], groupcut: usize) ->
     let fof_e = measured_vals.e_num as f64 / measured_vals.e_den as f64;
     let mock_q = mock_vals.q_num / mock_vals.q_den;
     let fof_q = measured_vals.q_num / measured_vals.q_den;
+    println!("mock_e: {}, fof_e: {}, mock_q: {}, fof_q: {}", mock_vals.e_num, measured_vals.e_num, mock_vals.q_num, measured_vals.q_num);
+    println!("mock_e_den: {}, fof_e_den: {}, mock_q_den: {}, fof_q_den: {}", mock_vals.e_den, measured_vals.e_den, mock_vals.q_den, measured_vals.q_den);
     mock_e * fof_e * mock_q * fof_q
 }
