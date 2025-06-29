@@ -1,21 +1,11 @@
 use extendr_api::prelude::*;
+use fof::bijectivity::s_score;
+use fof::group_properties::GroupedGalaxyCatalog;
+use fof::link_finder::{ffl1, find_links};
+use fof::stats::harmonic_mean;
+use fof::Cosmology;
 use rayon::prelude::*;
-
 use std::f64;
-
-pub mod group_properties;
-pub mod spherical_trig_funcs;
-pub mod cosmology_funcs;
-pub mod helper_funcs;
-pub mod constants;
-pub mod link_finder;
-pub mod bij;
-
-use crate::cosmology_funcs::Cosmology;
-use crate::group_properties::GroupedGalaxyCatalog;
-use crate::link_finder::{ffl1, fast_ffl1_parallel}; //fast_ffl1_parallel
-use crate::bij::s_score;
-use crate::helper_funcs::harmonic_mean;
 
 
 /// Calculate the hubble constant at different redshifts.
@@ -28,7 +18,12 @@ use crate::helper_funcs::harmonic_mean;
 /// @export
 #[extendr]
 fn h_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     redshift_array
         .par_iter()
         .map(|z| cosmo.h_at_z(*z))
@@ -44,14 +39,24 @@ fn h_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0
 /// @return multiple comoving distance in Mpc.
 /// @export
 #[extendr]
-fn comoving_distances_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
+fn comoving_distances_at_z(
+    redshift_array: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     redshift_array
         .par_iter()
         .map(|z| cosmo.comoving_distance(*z))
         .collect()
 }
-
 
 /// Redshift at some given comoving distances in Mpc.
 /// @param redshift_array an array of multiple redshift values.
@@ -61,8 +66,19 @@ fn comoving_distances_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64,
 /// @param h0 H0 = 100 * h.
 /// @export
 #[extendr]
-fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
+fn z_at_comoving_distances(
+    distances: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     distances
         .par_iter()
         .map(|d| cosmo.inverse_codist(*d))
@@ -70,7 +86,7 @@ fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omeg
 }
 
 /// Calculate the Rvir from a given mass for a range of redshift values.
-/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii.
 /// @param redshift_array an array of multiple redshift values.
 /// @param omega_m Mass density (often 0.3 in LCDM).
 /// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
@@ -78,8 +94,20 @@ fn z_at_comoving_distances(distances: Vec<f64>, omega_m: f64, omega_k: f64, omeg
 /// @param h0 H0 = 100 * h.
 /// @export
 #[extendr]
-fn calculate_max_rvirs(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m: f64, omega_k:f64, omega_l:f64, h0: f64) -> Vec<f64> {
-    let cosmo =  Cosmology {omega_m, omega_k, omega_l, h0};
+fn calculate_max_rvirs(
+    max_solar_mass: f64,
+    redshift_array: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     redshift_array
         .par_iter()
         .map(|z| cosmo.mvir_to_rvir(max_solar_mass, *z))
@@ -87,7 +115,7 @@ fn calculate_max_rvirs(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m: f6
 }
 
 /// Calculate the Sigma from a given mass for a range of redshift values.
-/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+/// @param max_solar_mass The maximum viral mass in solar masses for the viral radii.
 /// @param redshift_array an array of multiple redshift values.
 /// @param omega_m Mass density (often 0.3 in LCDM).
 /// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
@@ -95,8 +123,20 @@ fn calculate_max_rvirs(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m: f6
 /// @param h0 H0 = 100 * h.
 /// @export
 #[extendr]
-fn calculate_max_sigmas(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    let cosmo =  Cosmology {omega_m, omega_k, omega_l, h0};
+fn calculate_max_sigmas(
+    max_solar_mass: f64,
+    redshift_array: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     redshift_array
         .par_iter()
         .map(|z| cosmo.mvir_to_sigma(max_solar_mass, *z))
@@ -112,29 +152,51 @@ fn calculate_max_sigmas(max_solar_mass: f64,redshift_array: Vec<f64>, omega_m: f
 /// @returns The distance modulus for the given array of redshifts.
 /// @export
 #[extendr]
-fn distance_modulus(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> Vec<f64> {
-    let cosmo = Cosmology {omega_m, omega_k, omega_l, h0};
+fn distance_modulus(
+    redshift_array: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     redshift_array
         .par_iter()
         .map(|&z| cosmo.distance_modulus(z))
         .collect()
 }
 
-
 /// finding the links between all galaxies in a brute force way.
 /// @description
 /// `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
 /// @param ra Array of right ascension values.
 /// @param dec Array of declination values.
-/// @param comoving_distances Array of comoving distances in Mpc. 
+/// @param comoving_distances Array of comoving distances in Mpc.
 /// @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-/// @param b0 The plane-of-sky constant to be scaled. 
+/// @param b0 The plane-of-sky constant to be scaled.
 /// @param r0 The line-of-sight constant to be scaled.
 /// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 /// @export
 #[extendr]
-fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
-    let links = ffl1(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+fn fof_links_aaron(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> List {
+    let links = ffl1(
+        ra_array,
+        dec_array,
+        comoving_distances,
+        linking_lengths_pos,
+        linking_lengths_los,
+    );
     let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
     let j_vec: Vec<usize> = links.iter().map(|(_, y)| *y + 1).collect();
     list![i = i_vec, j = j_vec]
@@ -145,15 +207,27 @@ fn fof_links_aaron(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: 
 /// `fof_links_fast` will determine all connections between galaxies in a survey and return the pairs.
 /// @param ra Array of right ascension values.
 /// @param dec Array of declination values.
-/// @param comoving_distances Array of comoving distances in Mpc. 
+/// @param comoving_distances Array of comoving distances in Mpc.
 /// @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-/// @param b0 The plane-of-sky constant to be scaled. 
+/// @param b0 The plane-of-sky constant to be scaled.
 /// @param r0 The line-of-sight constant to be scaled.
 /// @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 /// @export
 #[extendr]
-fn fof_links_fast(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: Vec<f64>, linking_lengths_pos: Vec<f64>, linking_lengths_los: Vec<f64>) -> List {
-    let links = fast_ffl1_parallel(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los);
+fn fof_links_fast(
+    ra_array: Vec<f64>,
+    dec_array: Vec<f64>,
+    comoving_distances: Vec<f64>,
+    linking_lengths_pos: Vec<f64>,
+    linking_lengths_los: Vec<f64>,
+) -> List {
+    let links = find_links(
+        ra_array,
+        dec_array,
+        comoving_distances,
+        linking_lengths_pos,
+        linking_lengths_los,
+    );
     let i_vec: Vec<usize> = links.iter().map(|(x, _)| *x + 1).collect(); // + 1 for R idx
     let j_vec: Vec<usize> = links.iter().map(|(_, y)| *y + 1).collect();
     list![i = i_vec, j = j_vec]
@@ -163,18 +237,41 @@ fn fof_links_fast(ra_array: Vec<f64>, dec_array: Vec<f64>, comoving_distances: V
 /// @description
 /// This is the R wrapper for the rust functionality that builds the group catalog. There shouldn't
 /// be a need to use this in R as a more R-friendly function should be available.
-/// @param ra Array of right asscension values. 
+/// @param ra Array of right asscension values.
 /// @param dec Array of declination values.
 /// @param redshift Array of redshift values.
 /// @param magnitudes Array of apparent magnitude values.
-/// @param velocity_errors Array of velocity errors. 
+/// @param velocity_errors Array of velocity errors.
 /// @param group_id Array of the group ids, where -1 represents galaxies not in a group.
 /// @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
 /// @export
 #[extendr]
-fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolute_magnitudes: Vec<f64>, velocity_errors: Vec<f64>, group_ids: Vec<i32>, omega_m: f64, omega_k: f64, omega_l: f64, h0: f64) -> List {
-    let catalog = GroupedGalaxyCatalog {ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids};
-    let cosmo = &Cosmology { omega_m, omega_k, omega_l, h0 };
+fn create_group_catalog(
+    ra: Vec<f64>,
+    dec: Vec<f64>,
+    redshift: Vec<f64>,
+    absolute_magnitudes: Vec<f64>,
+    velocity_errors: Vec<f64>,
+    group_ids: Vec<i32>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> List {
+    let catalog = GroupedGalaxyCatalog {
+        ra,
+        dec,
+        redshift,
+        absolute_magnitudes,
+        velocity_errors,
+        group_ids,
+    };
+    let cosmo = &Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
     let group_catalog = catalog.calculate_group_properties(cosmo);
     list![
         group_id = group_catalog.ids,
@@ -188,7 +285,6 @@ fn create_group_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolut
         multiplicity = group_catalog.multiplicity
     ]
 }
-
 
 /// Determines the s score as in Robotham+2011
 /// @export
@@ -224,7 +320,6 @@ extendr_module! {
     fn calculate_harmonic_mean;
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::iter::zip;
@@ -259,6 +354,4 @@ mod tests {
             assert!((ret_z - z).abs() < 1e-5)
         }
     }
-
-
 }

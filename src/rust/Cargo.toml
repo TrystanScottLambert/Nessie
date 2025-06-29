@@ -10,6 +10,7 @@ name = 'Nessie'
 [dependencies]
 cdshealpix = "0.7.3"
 extendr-api = '*'
+fof = "0.1.2"
 integrate = "0.1.11"
 kiddo = "5.0.3"
 libm = "0.2.15"

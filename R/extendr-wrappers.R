@@ -50,7 +50,7 @@ distance_modulus <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Cal
 h_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__h_at_z, redshift_array, omega_m, omega_k, omega_l, h0)
 
 #' Calculate the Rvir from a given mass for a range of redshift values.
-#' @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+#' @param max_solar_mass The maximum viral mass in solar masses for the viral radii.
 #' @param redshift_array an array of multiple redshift values.
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
@@ -60,7 +60,7 @@ h_at_z <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__h_
 calculate_max_rvirs <- function(max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__calculate_max_rvirs, max_solar_mass, redshift_array, omega_m, omega_k, omega_l, h0)
 
 #' Calculate the Sigma from a given mass for a range of redshift values.
-#' @param max_solar_mass The maximum viral mass in solar masses for the viral radii. 
+#' @param max_solar_mass The maximum viral mass in solar masses for the viral radii.
 #' @param redshift_array an array of multiple redshift values.
 #' @param omega_m Mass density (often 0.3 in LCDM).
 #' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
@@ -74,9 +74,9 @@ calculate_max_sigmas <- function(max_solar_mass, redshift_array, omega_m, omega_
 #' `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
 #' @param ra Array of right ascension values.
 #' @param dec Array of declination values.
-#' @param comoving_distances Array of comoving distances in Mpc. 
+#' @param comoving_distances Array of comoving distances in Mpc.
 #' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-#' @param b0 The plane-of-sky constant to be scaled. 
+#' @param b0 The plane-of-sky constant to be scaled.
 #' @param r0 The line-of-sight constant to be scaled.
 #' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 #' @export
@@ -87,9 +87,9 @@ fof_links_aaron <- function(ra_array, dec_array, comoving_distances, linking_len
 #' `fof_links_fast` will determine all connections between galaxies in a survey and return the pairs.
 #' @param ra Array of right ascension values.
 #' @param dec Array of declination values.
-#' @param comoving_distances Array of comoving distances in Mpc. 
+#' @param comoving_distances Array of comoving distances in Mpc.
 #' @param linking_lengths An array of individual scaled linking lengths for each galaxy (ignoring r0 and b0).
-#' @param b0 The plane-of-sky constant to be scaled. 
+#' @param b0 The plane-of-sky constant to be scaled.
 #' @param r0 The line-of-sight constant to be scaled.
 #' @return A dataframe-like object of tuples which represent the link between galaxies (i, j) if they exist.
 #' @export
@@ -99,11 +99,11 @@ fof_links_fast <- function(ra_array, dec_array, comoving_distances, linking_leng
 #' @description
 #' This is the R wrapper for the rust functionality that builds the group catalog. There shouldn't
 #' be a need to use this in R as a more R-friendly function should be available.
-#' @param ra Array of right asscension values. 
+#' @param ra Array of right asscension values.
 #' @param dec Array of declination values.
 #' @param redshift Array of redshift values.
 #' @param magnitudes Array of apparent magnitude values.
-#' @param velocity_errors Array of velocity errors. 
+#' @param velocity_errors Array of velocity errors.
 #' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
 #' @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
 #' @export

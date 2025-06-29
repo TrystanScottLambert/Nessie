@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "cdshealpix",
  "extendr-api",
+ "fof",
  "integrate",
  "kiddo",
  "libm",
@@ -274,6 +275,18 @@ checksum = "4a3d7db9596fecd151c5f638c0ee5d5bd487b6e0ea232e5dc96d5250f6f94b1d"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
+]
+
+[[package]]
+name = "fof"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9300e6f8f360613dbfdf4d7b37aa01d0b4b599e4560a23dd02bfa8683434a349"
+dependencies = [
+ "integrate",
+ "libm",
+ "rayon",
+ "roots",
 ]
 
 [[package]]
