@@ -102,7 +102,7 @@ library(Nessie)
 # Preparing redshift data
 data <- as.data.frame(read.csv('some_redshift_survey.csv'))
 cosmo <- FlatCosmology$new(h = 0.7, omega_matter = 0.3)
-running_density <- create_density_function(redshifts, total_counts = length(redshifts), survey_fractional_area = 0.0001, cosmology = cosmo)
+running_density <- create_density_function(data$zobs, total_counts = length(data$zobs), survey_fractional_area = 0.0001, cosmology = cosmo)
 
 # Running group catalogue
 red_cat <- RedshiftCatalog$new(data$ra, data$dec, data$zobs, running_density, cosmo)
