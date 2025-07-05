@@ -282,7 +282,10 @@ fn create_group_catalog(
         r50 = group_catalog.r50s,
         r100 = group_catalog.r100s,
         rsigma = group_catalog.rsigmas,
-        multiplicity = group_catalog.multiplicity
+        multiplicity = group_catalog.multiplicity,
+        velocity_dispersion_gap = group_catalog.velocity_dispersion_gap,
+        velocity_dispersion_gap_err = group_catalog.velocity_dispersion_gap_err,
+        masses_raw = group_catalog.raw_masses,
     ]
 }
 
