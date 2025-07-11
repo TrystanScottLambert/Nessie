@@ -212,3 +212,9 @@ best_fit_params <- results$parm
 ```
 
 Tuning can be slow, but since Nessie is already very highly multi-threaded, there should be no need to try and parallelize further. Furthermore, Nessie should scale with the number of cores, which means it will use the maximum number of cores available on HPC environments.
+
+
+## Contributing
+
+We welcome contributions to Nessie! Please read our Contributing Guidelines before submitting issues or pull requests.
+
