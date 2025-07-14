@@ -52,6 +52,15 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       } else {
         self$completeness <- completeness
       }
+      validate(self$ra_array, "ra")
+      validate(self$dec_array, "dec")
+      validate(self$redshift_array, "redshift")
+      validate(self$completeness, "completeness")
+
+      validate_array(self$ra_array)
+      validate_array(self$dec_array)
+      validate_array(self$redshift_array)
+      validate_array(self$completeness)
     },
 
 
@@ -95,6 +104,10 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @param r0 The line-of-sight linking length scale factor.
     #' @param max_stellar_mass The maximum stellar mass to cap linking distances (default: 1e15).
     run_fof = function(b0, r0, max_stellar_mass = 1e15) {
+      validate(b0, 'b0')
+      validate(r0, 'r0')
+      validate_scalar(r0)
+      validate_scalar(b0)
       group_links <- self$get_raw_groups(b0, r0, max_stellar_mass)
       all_ids <- seq(length(self$ra_array)) # positions of all galaxies
       singleton_galaxies <- setdiff(all_ids, group_links$galaxy_id)
@@ -112,6 +125,8 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @param velocity_errors A numeric vector of redshift or velocity errors.
     #' @return A data.frame summarizing group-level statistics.
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
+      validate(absolute_magnitudes, 'absolute_mag')
+      validate_array(absolute_magnitudes)
       if (is.null(self$group_ids)) {
         stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
       }
@@ -131,7 +146,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
     compare_to_mock = function(min_group_size = 2) {
       if (is.null(self$group_ids)) {
-        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `compare_to_mock`")
       }
 
       if (is.null(self$mock_group_ids)) {

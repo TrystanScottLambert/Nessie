@@ -36,7 +36,7 @@ test_that("completeness is automatically set", {
 test_that("getting group ids works on simple case", {
   b0 <-  100.
   r0 <-  180.
-  ras <-  c(20., 20., 20., -20., -20., -20., 100., 100., 0., 180.)
+  ras <-  c(20., 20., 20., 40, 40, 40, 100., 100., 0., 180.)
   decs <-  c(-50, -50, -50, 0., 0., 0., 90, 90, 45, -45)
   redshifts <-  c(0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.4, 0.4, 0.2, 0.2)
   cosmo <- FlatCosmology$new(h = 0.7, omega_m = 0.3)
