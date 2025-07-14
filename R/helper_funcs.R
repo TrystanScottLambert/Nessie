@@ -139,3 +139,85 @@ tune_group_finder <- function(
   return(opt_gama)
 
 }
+
+
+validate_scalar <- function(scalar_value) {
+  if (!is.numeric(scalar_value)) {
+    stop("Value must be numeric.")
+  }
+  if (length(scalar_value) != 1) {
+    stop("Value must be a scalar (length 1).")
+  }
+  if (is.nan(scalar_value)) {
+    stop("Value cannot be NaN.")
+  }
+  if (is.na(scalar_value)) {
+    stop("Value cannot be NA.")
+  }
+  if (is.infinite(scalar_value)) {
+    stop("Value cannot be infinite.")
+  }
+  TRUE
+}
+
+validate_array <- function(arr_value) {
+  if (!is.numeric(arr_value)) {
+    stop("Array must be numeric.")
+  }
+  if (!is.vector(arr_value)) {
+    stop("Input must be a 1D vector.")
+  }
+  if (any(is.nan(arr_value))) {
+    stop("Array contains NaN values.")
+  }
+  if (any(is.na(arr_value))) {
+    stop("Array contains NA values.")
+  }
+  if (any(is.infinite(arr_value))) {
+    stop("Array contains infinite values.")
+  }
+  TRUE
+}
+
+validate <- function(value, type) {
+  type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0"))
+  switch (type,
+    ra = {
+      if (any(value < 0 | value > 360, na.rm = TRUE)) {
+        stop("RA values must be between 0 and 360 degrees.")
+      }
+    },
+    dec = {
+      if (any(value < -90 | value > 90, na.rm = TRUE)) {
+        stop("Dec Values must be between -90 and 90 degrees.")
+      }
+    },
+    redshift = {
+      if (any(value < 0, na.rm = TRUE)) {
+        stop("Redshifts have negative values!")
+      } else if (any(value > 1100, na.rm = TRUE)) {
+        warning("REDSHIFTS ARE HUGE! Are you sure this is correct?")
+      }
+    },
+    absolute_mag = {
+      if (any(value > -4 | value < -50, na.rm = TRUE)) {
+        warning("ABSOLUTE MAGNITUDES LOOK WEIRD. MAKE SURE THEY ARE CORRECT!")
+      }
+    },
+    completeness = {
+      if (any(value > 1 | value < 0)) {
+        stop("Completeness must be between 0 and 1.")
+      }
+    },
+    b0 = {
+      if (value < 0) {
+        stop("b0 cannot be negative!")
+      }
+    },
+    r0 = {
+      if (value < 0) {
+        stop("R0 cannot be negative!")
+      }
+    }
+  )
+}
