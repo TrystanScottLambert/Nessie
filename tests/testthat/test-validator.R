@@ -30,6 +30,14 @@ test_that("Absolute magnitude validation works", {
                  "ABSOLUTE MAGNITUDES LOOK WEIRD. MAKE SURE THEY ARE CORRECT!")
 })
 
+test_that("Velocity error validation works", {
+  expect_silent(validate(c(20, 30), type = "vel_err"))
+  expect_warning(validate(c(2001), type = "vel_err"),
+                 "Velocity error seems very large. Are units correct?")
+  expect_error(validate(c(-55), type = "vel_err"),
+                 "Velocity error cannot be negative.")
+})
+
 test_that("Completeness validation works", {
   expect_silent(validate(c(0.5, 1), type = "completeness"))
   expect_error(validate(c(1.1, 0,5), type = "completeness"),

@@ -180,7 +180,7 @@ validate_array <- function(arr_value) {
 }
 
 validate <- function(value, type) {
-  type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0"))
+  type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0", "vel_err"))
   switch (type,
     ra = {
       if (any(value < 0 | value > 360, na.rm = TRUE)) {
@@ -217,6 +217,13 @@ validate <- function(value, type) {
     r0 = {
       if (value < 0) {
         stop("R0 cannot be negative!")
+      }
+    },
+    vel_err = {
+      if (any(value < 0)) {
+        stop("Velocity error cannot be negative.")
+      } else if (any(value > 2000)) {
+        warning("Velocity error seems very large. Are units correct?")
       }
     }
   )

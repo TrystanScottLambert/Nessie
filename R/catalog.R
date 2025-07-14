@@ -127,6 +127,8 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
       validate(absolute_magnitudes, 'absolute_mag')
       validate_array(absolute_magnitudes)
+      validate(velocity_errors, 'vel_err')
+      validate_array(velocity_errors)
       if (is.null(self$group_ids)) {
         stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
       }
