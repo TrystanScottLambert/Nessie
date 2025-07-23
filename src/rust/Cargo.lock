@@ -52,9 +52,9 @@ checksum = "5c76a5792e44e4abe34d3abf15636779261d45a7450612059293d1d2cfc63422"
 
 [[package]]
 name = "cc"
-version = "1.2.29"
+version = "1.2.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c1599538de2394445747c8cf7935946e3cc27e9625f889d979bfb2aaf569362"
+checksum = "deec109607ca693028562ed836a5f1c4b8bd77755c4e132fc5ce11b0b6211ae7"
 dependencies = [
  "shlex",
 ]
@@ -208,9 +208,9 @@ dependencies = [
 
 [[package]]
 name = "fof"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f38da621f29759f1ae235031f61292542752792783f8f811f47b6754cefd93fa"
+checksum = "ecaf7ed0216414e26475a394da1475574986c9fdecdde118faf3ff7585fb1dc7"
 dependencies = [
  "csv",
  "integrate",
