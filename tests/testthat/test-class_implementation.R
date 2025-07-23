@@ -17,8 +17,8 @@ test_that("it runs", {
   expect_equal(group$galaxy_id, c(1, 2))
   expect_equal(group$group_id, c(1, 1))
   expect_equal(cat$group_ids, c(1, 1, -1))
-  expect_equal(group_catalog$ra, 120.) # the fact that this is a single number also tests length=1
-  expect_equal(group_catalog$dec, -34.)
+  expect_equal(group_catalog$iter_ra, 120.) # the fact that this is a single number also tests length=1
+  expect_equal(group_catalog$iter_dec, -34.)
   expect_equal(group_catalog$multiplicity, 2)
 })
 

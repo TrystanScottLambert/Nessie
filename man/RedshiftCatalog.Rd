@@ -42,6 +42,7 @@ using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengt
 \item \href{#method-RedshiftCatalog-get_raw_groups}{\code{RedshiftCatalog$get_raw_groups()}}
 \item \href{#method-RedshiftCatalog-run_fof}{\code{RedshiftCatalog$run_fof()}}
 \item \href{#method-RedshiftCatalog-calculate_group_table}{\code{RedshiftCatalog$calculate_group_table()}}
+\item \href{#method-RedshiftCatalog-calculate_pair_table}{\code{RedshiftCatalog$calculate_pair_table()}}
 \item \href{#method-RedshiftCatalog-compare_to_mock}{\code{RedshiftCatalog$compare_to_mock()}}
 \item \href{#method-RedshiftCatalog-clone}{\code{RedshiftCatalog$clone()}}
 }
@@ -88,7 +89,12 @@ Generate FoF links between galaxies based on spatial and redshift linking length
 very little reason to have to run this yourself. In most cases it is more appropriate to run
 the \code{run_fof} method.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$get_raw_groups(b0, r0, max_stellar_mass = 1e+15)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$get_raw_groups(
+  b0,
+  r0,
+  max_stellar_mass = 1e+15,
+  algorithm = "fast"
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -99,6 +105,8 @@ the \code{run_fof} method.
 \item{\code{r0}}{The line-of-sight linking length constant.}
 
 \item{\code{max_stellar_mass}}{The maximum stellar mass to cap linking distances (default: 1e15 solar masses).}
+
+\item{\code{algorithm}}{The type of algorithm to use to find the groups. Either "fast" or "classic". Both are equivalent.}
 }
 \if{html}{\out{</div>}}
 }
@@ -147,7 +155,27 @@ Generate a summary data.frame of group properties based on assigned group IDs. M
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A data.frame summarizing group-level statistics.
+A data.frame summarizing group properties.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RedshiftCatalog-calculate_pair_table"></a>}}
+\if{latex}{\out{\hypertarget{method-RedshiftCatalog-calculate_pair_table}{}}}
+\subsection{Method \code{calculate_pair_table()}}{
+Generates a table of all the pairs found. Must have run the "run_fof" method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$calculate_pair_table(absolute_magnitudes)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{absolute_magnitudes}}{A numeric vector of the absolute magntiudes for each galaxy.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+a data.frame of pair properties
 }
 }
 \if{html}{\out{<hr>}}

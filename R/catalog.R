@@ -71,6 +71,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @param b0 The plane-of-sky linking length constant.
     #' @param r0 The line-of-sight linking length constant.
     #' @param max_stellar_mass The maximum stellar mass to cap linking distances (default: 1e15 solar masses).
+    #' @param algorithm The type of algorithm to use to find the groups. Either "fast" or "classic". Both are equivalent.
     #' @return A data.frame with columns `galaxy_id` and `group_id` indicating linked galaxies.
     get_raw_groups = function(b0, r0, max_stellar_mass = 1e15, algorithm = 'fast') {
       co_dists <- self$cosmology$comoving_distance(self$redshift_array)
@@ -123,7 +124,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' Generate a summary data.frame of group properties based on assigned group IDs. Must have run the group finder.
     #' @param absolute_magnitudes A numeric vector of absolute magnitudes per galaxy.
     #' @param velocity_errors A numeric vector of redshift or velocity errors.
-    #' @return A data.frame summarizing group-level statistics.
+    #' @return A data.frame summarizing group properties.
     calculate_group_table = function(absolute_magnitudes, velocity_errors) {
       validate(absolute_magnitudes, 'absolute_mag')
       validate_array(absolute_magnitudes)
@@ -136,6 +137,21 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
         self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, velocity_errors,
         self$group_ids, self$cosmology$omega_m, self$cosmology$omega_k, self$cosmology$omega_lambda,
         self$cosmology$hubble_constant))
+    },
+
+    #' @description
+    #' Generates a table of all the pairs found. Must have run the "run_fof" method.
+    #' @param absolute_magnitudes A numeric vector of the absolute magntiudes for each galaxy.
+    #' @return a data.frame of pair properties
+    calculate_pair_table = function(absolute_magnitudes) {
+      validate(absolute_magnitudes, 'absolute_mag')
+      validate_array(absolute_magnitudes)
+      if (is.null(self$group_ids)) {
+        stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
+      }
+      as.data.frame(create_pair_catalog(
+        self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, self$group_ids
+      ))
     },
 
     #' @description

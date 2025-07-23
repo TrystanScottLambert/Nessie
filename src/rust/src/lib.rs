@@ -243,7 +243,7 @@ fn fof_links_fast(
 /// @param magnitudes Array of apparent magnitude values.
 /// @param velocity_errors Array of velocity errors.
 /// @param group_id Array of the group ids, where -1 represents galaxies not in a group.
-/// @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
+/// @return A named list with group properties.
 /// @export
 #[extendr]
 fn create_group_catalog(
@@ -299,6 +299,18 @@ fn create_group_catalog(
     ]
 }
 
+
+/// Creates a pair catalog from the given arrays.
+/// @description
+/// This is the R wrapper for the rust functionality that builds the pair catalog. There shouldn't
+/// be a need to use this in R as a more R-friendly function should be available.
+/// @param ra Array of right asscension values.
+/// @param dec Array of declination values.
+/// @param redshift Array of redshift values.
+/// @param magnitudes Array of apparent magnitude values.
+/// @param group_id Array of the group ids, where -1 represents galaxies not in a group.
+/// @return A named list with pair properties.
+/// @export
 #[extendr]
 fn create_pair_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolute_magnitudes: Vec<f64>, group_ids: Vec<i32>) -> List {
     let catalog = GroupedGalaxyCatalog {
@@ -357,6 +369,7 @@ extendr_module! {
     fn create_group_catalog;
     fn calculate_s_score;
     fn calculate_harmonic_mean;
+    fn create_pair_catalog;
 }
 
 #[cfg(test)]

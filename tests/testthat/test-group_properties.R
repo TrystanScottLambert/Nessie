@@ -27,9 +27,9 @@ test_that("comparing to the old code.", {
 
   expect_equal(result$group_id, df_master$Gnum)
   expect_equal(result$multiplicity, df_master$Mult)
-  expect_equal(result$ra, df_master$IterCenRA, tolerance = 1e-7) # one or two values incorrect.
-  expect_equal(result$dec, df_master$IterCenDEC, tolerance = 1e-7) # one or two values incorrect.
-  expect_equal(result$redshift, df_master$MedianZ, tolerance = 1e-4)
+  expect_equal(result$iter_ra, df_master$IterCenRA, tolerance = 1e-7) # one or two values incorrect.
+  expect_equal(result$iter_dec, df_master$IterCenDEC, tolerance = 1e-7) # one or two values incorrect.
+  expect_equal(result$median_redshift, df_master$MedianZ, tolerance = 1e-4)
   expect_equal(result$co_dist, df_master$MedianDist, tolerance = 1e-3) # just rounding errors
   expect_equal(result$r50, df_master$Rad50, tolerance = 1e-4) # Radii are completely wrong.
   expect_equal(result$r100, df_master$Rad100, tolerance = 1e-4)  # Radii are completely wrong.

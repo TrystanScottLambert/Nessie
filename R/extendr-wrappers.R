@@ -105,7 +105,7 @@ fof_links_fast <- function(ra_array, dec_array, comoving_distances, linking_leng
 #' @param magnitudes Array of apparent magnitude values.
 #' @param velocity_errors Array of velocity errors.
 #' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
-#' @return A named list with ra, dec, redshift, co_dist, r50, r100, rsigma, and multiplicity.
+#' @return A named list with group properties.
 #' @export
 create_group_catalog <- function(ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0) .Call(wrap__create_group_catalog, ra, dec, redshift, absolute_magnitudes, velocity_errors, group_ids, omega_m, omega_k, omega_l, h0)
 
@@ -118,6 +118,19 @@ calculate_s_score <- function(measured_groups, mock_groups, min_group_size) .Cal
 #' @returns The harmonic mean.
 #' @export
 calculate_harmonic_mean <- function(values) .Call(wrap__calculate_harmonic_mean, values)
+
+#' Creates a pair catalog from the given arrays.
+#' @description
+#' This is the R wrapper for the rust functionality that builds the pair catalog. There shouldn't
+#' be a need to use this in R as a more R-friendly function should be available.
+#' @param ra Array of right asscension values.
+#' @param dec Array of declination values.
+#' @param redshift Array of redshift values.
+#' @param magnitudes Array of apparent magnitude values.
+#' @param group_id Array of the group ids, where -1 represents galaxies not in a group.
+#' @return A named list with pair properties.
+#' @export
+create_pair_catalog <- function(ra, dec, redshift, absolute_magnitudes, group_ids) .Call(wrap__create_pair_catalog, ra, dec, redshift, absolute_magnitudes, group_ids)
 
 
 # nolint end
