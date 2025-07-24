@@ -81,6 +81,32 @@ In the most basic of cases, the redshifts of the actual survey can be used. Howe
 
 Note that the fractional area is required and not the total area in steradians. i.e., area_in_steradians/4π.
 
+
+#### Completeness
+
+It is possible to account for completeness by passing an array of values between 0 and 1 when constructing the `RedshiftCatalog` object. A value of 1 indicates that a galaxy lies in a fully complete region, 0 indicates a completely incomplete region, and 0.5 would mean the region is 50% complete. The definition of this completeness array is left to the user, but `Nessie` provides a helper function—`calculate_completeness`—which can estimate completeness based on a "target catalog" (i.e., a catalog of RA and Dec representing the galaxies that were planned to be observed).
+```r
+taget_data <- as.data.frame(read.csv("/some/target/catalog"))
+observed_ra <- data$ra
+observed_dec <- data$dec
+target_ra <- target_data$ra
+target_dec <- target_data$dec
+eval_ra <- data$ra
+eval_dec <- data$dec
+on_sky_radii <- rep(0.01, length(eval_ra)) # deg
+completeness_array <- calculate_completeness(observed_ra, observed_dec, target_ra, target_dec, eval_ra, eval_dec, on_sky_radii) 
+
+```
+In the example above, we set the radius for evaluating completeness to 0.01 degrees for every evaluation point. That is, for each point in `eval_ra` and `eval_dec`, completeness is computed within a 0.01-degree radius. It is also possible to use non-uniform radii.
+
+For the group finder, we want to evaluate completeness around each observed galaxy. In this case, it is appropriate to set `eval_ra` and `eval_dec` equal to the observed RA and Dec. However, this function can also be used to build a completeness map by defining `eval_ra` and `eval_dec` on an arbitrarily fine or coarse grid.
+
+A constant completeness value can also be passed to `Nessie`. In fact, any array with the same length as the data and values between 0 and 1 is valid:
+
+```r
+#lazy method
+completeness = rep(0.99, length(data$ra))
+```
 ### Running the Group Finder
 
 The final redshift catalog can be built like this:
@@ -89,6 +115,11 @@ The final redshift catalog can be built like this:
 red_cat <- RedshiftCatalog$new(data$ra, data$dec, data$zobs, running_density, cosmo)
 
 ```
+This assumes 100% completeness. If a completeness array is present it can be passed during the construction:
+```r
+red_cat <- RedshiftCatalog$new(data$ra, data$dec, data$zobs, running_density, cosmo, completeness)
+```
+And it will be taken into account for all subsequent calculations.
 
 Once built, the group finder can be run:
 
