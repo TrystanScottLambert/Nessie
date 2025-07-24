@@ -1,12 +1,12 @@
 use extendr_api::prelude::*;
 use fof::bijectivity::s_score;
+use fof::completeness::{calculate_completeness, PositionCatalog};
 use fof::group_properties::GroupedGalaxyCatalog;
 use fof::link_finder::{ffl1, find_links};
 use fof::stats::harmonic_mean;
 use fof::Cosmology;
 use rayon::prelude::*;
 use std::f64;
-
 
 /// Calculate the hubble constant at different redshifts.
 /// @param redshift_array an array of multiple redshift values.
@@ -278,7 +278,11 @@ fn create_group_catalog(
         iter_ra = group_catalog.iter_ras,
         iter_dec = group_catalog.iter_decs,
         iter_redshift = group_catalog.iter_redshifts,
-        iter_idx = group_catalog.iter_idxs.iter().map(|id| id + 1).collect::<Vec<usize>>(), // +1 idx for R
+        iter_idx = group_catalog
+            .iter_idxs
+            .iter()
+            .map(|id| id + 1)
+            .collect::<Vec<usize>>(), // +1 idx for R
         median_redshift = group_catalog.median_redshifts,
         co_dist = group_catalog.distances,
         r50 = group_catalog.r50s,
@@ -288,7 +292,11 @@ fn create_group_catalog(
         velocity_dispersion_gap = group_catalog.velocity_dispersion_gap,
         velocity_dispersion_gap_err = group_catalog.velocity_dispersion_gap_err,
         mass_proxy = group_catalog.raw_masses,
-        bcg_idxs = group_catalog.bcg_idxs.iter().map(|id| id + 1).collect::<Vec<usize>>(),
+        bcg_idxs = group_catalog
+            .bcg_idxs
+            .iter()
+            .map(|id| id + 1)
+            .collect::<Vec<usize>>(),
         bcg_ras = group_catalog.bcg_ras,
         bcg_decs = group_catalog.bcg_decs,
         bcg_redshifts = group_catalog.bcg_redshifts,
@@ -298,7 +306,6 @@ fn create_group_catalog(
         flux_proxies = group_catalog.total_flux_proxies
     ]
 }
-
 
 /// Creates a pair catalog from the given arrays.
 /// @description
@@ -312,21 +319,35 @@ fn create_group_catalog(
 /// @return A named list with pair properties.
 /// @export
 #[extendr]
-fn create_pair_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolute_magnitudes: Vec<f64>, group_ids: Vec<i32>) -> List {
+fn create_pair_catalog(
+    ra: Vec<f64>,
+    dec: Vec<f64>,
+    redshift: Vec<f64>,
+    absolute_magnitudes: Vec<f64>,
+    group_ids: Vec<i32>,
+) -> List {
     let catalog = GroupedGalaxyCatalog {
         ra,
         dec,
         redshift,
         absolute_magnitudes,
-        velocity_errors: vec![50.;1], // dummy variable
+        velocity_errors: vec![50.; 1], // dummy variable
         group_ids,
     };
 
     let pair_catalog = catalog.calculate_pair_properties();
     list![
         pair_id = pair_catalog.ids,
-        idx_1 = pair_catalog.idx_1.iter().map(|id| id + 1).collect::<Vec<i32>>(), // +1 for R
-        idx_2 = pair_catalog.idx_2.iter().map(|id| id + 1).collect::<Vec<i32>>(),
+        idx_1 = pair_catalog
+            .idx_1
+            .iter()
+            .map(|id| id + 1)
+            .collect::<Vec<i32>>(), // +1 for R
+        idx_2 = pair_catalog
+            .idx_2
+            .iter()
+            .map(|id| id + 1)
+            .collect::<Vec<i32>>(),
         projected_separation = pair_catalog.projected_separation,
         velocity_separation = pair_catalog.velocity_separation,
         ra_bar = pair_catalog.ra_bar,
@@ -335,7 +356,6 @@ fn create_pair_catalog(ra: Vec<f64>, dec: Vec<f64>, redshift: Vec<f64>, absolute
         total_absolute_mag = pair_catalog.total_absolute_mags,
     ]
 }
-
 
 /// Determines the s score as in Robotham+2011
 /// @export
@@ -351,6 +371,46 @@ fn calculate_s_score(measured_groups: &[i32], mock_groups: &[i32], min_group_siz
 #[extendr]
 fn calculate_harmonic_mean(values: Vec<f64>) -> f64 {
     harmonic_mean(values)
+}
+
+/// Completeness function to calculate the completeness at given positions.
+/// @param ra_observed The Right Ascension of the galaxies that were observed, in degrees.
+/// @param dec_observed The Declination of the galaxies in degrees that were observed, in degrees.
+/// @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
+/// @param dec_target The Declination of the galaxies that were targeted for observation in degress.
+/// @param ra_evaulate The Right Ascension to be evaluated for completeness in degrees.
+/// @param dec_evaluate The Declination to be evaluated for completeness in degrees.
+/// @param angular_radius The search area for each galaxy in degress.
+/// @return An array of elements between 0-1.
+/// @export
+#[extendr]
+fn calc_completeness_rust(
+    ra_observed: Vec<f64>,
+    dec_observed: Vec<f64>,
+    ra_target: Vec<f64>,
+    dec_target: Vec<f64>,
+    ra_evaluate: Vec<f64>,
+    dec_evaluate: Vec<f64>,
+    angular_radius: Vec<f64>,
+) -> Vec<f64> {
+    let observed_catalog = PositionCatalog {
+        ra_deg: ra_observed,
+        dec_deg: dec_observed,
+    };
+    let target_catalog = PositionCatalog {
+        ra_deg: ra_target,
+        dec_deg: dec_target,
+    };
+    let evaluate_catalog = PositionCatalog {
+        ra_deg: ra_evaluate,
+        dec_deg: dec_evaluate,
+    };
+    calculate_completeness(
+        observed_catalog,
+        target_catalog,
+        evaluate_catalog,
+        angular_radius,
+    )
 }
 
 // Macro to generate exports.
@@ -370,6 +430,7 @@ extendr_module! {
     fn calculate_s_score;
     fn calculate_harmonic_mean;
     fn create_pair_catalog;
+    fn calc_completeness_rust;
 }
 
 #[cfg(test)]
