@@ -3,20 +3,40 @@ test_that("score is the same as the old code", {
 
   # Setting up cosmology
   cosmo <- FlatCosmology$new(h = 1, omega_matter = 0.3)
-  g09_randoms <- as.data.frame(read.csv("~/Desktop/GAMA_paper_plotter/gama_g09_randoms.txt"))
-  g09_rho_mean <- Nessie::create_density_function(g09_randoms$z, length(g09_randoms$z)/400, 0.001453924, cosmo)
+  g09_randoms <- as.data.frame(read.csv(
+    "~/Desktop/GAMA_paper_plotter/gama_g09_randoms.txt"
+  ))
+  g09_rho_mean <- Nessie::create_density_function(
+    g09_randoms$z,
+    length(g09_randoms$z) / 400,
+    0.001453924,
+    cosmo
+  )
 
   # Setting up Redshift catalogues
-  g09_lightcone <- as.data.frame(arrow::read_parquet("~/Desktop/GAMA_paper_plotter/mocks/gama_gals_for_R.parquet"))
-  g09_lightcone <- g09_lightcone[g09_lightcone['lightcone_gamafield'] == '0g09', ]
+  g09_lightcone <- as.data.frame(arrow::read_parquet(
+    "~/Desktop/GAMA_paper_plotter/mocks/gama_gals_for_R.parquet"
+  ))
+  g09_lightcone <- g09_lightcone[
+    g09_lightcone['lightcone_gamafield'] == '0g09',
+  ]
   g09_lightcone <- g09_lightcone[g09_lightcone["zobs"] < 0.5, ]
 
-  red_cat <- RedshiftCatalog$new(g09_lightcone$ra, g09_lightcone$dec, g09_lightcone$zobs, g09_rho_mean, cosmo)
+  red_cat <- RedshiftCatalog$new(
+    g09_lightcone$ra,
+    g09_lightcone$dec,
+    g09_lightcone$zobs,
+    g09_rho_mean,
+    cosmo
+  )
 
   #Annoyingly we have to change the -1 thing to the old GroupID method to to do this test.
   neg1_idx <- which(g09_lightcone$GroupID == -1)
   maxgnum <- max(g09_lightcone$GroupID[g09_lightcone$GroupID != -1])
-  g09_lightcone$GroupID[neg1_idx] <- seq(from = maxgnum + 1, length.out = length(neg1_idx))
+  g09_lightcone$GroupID[neg1_idx] <- seq(
+    from = maxgnum + 1,
+    length.out = length(neg1_idx)
+  )
   red_cat$mock_group_ids <- g09_lightcone$GroupID
 
   b0 <- 0.05
@@ -34,11 +54,13 @@ test_that("score is the same as the old code", {
   mock_grefs <- cbind(seq_along(g09_lightcone$ra), g09_lightcone$GroupID)
   mock_t <- .bijcheck(mock_grefs, fullgroup, groupcut = 2)
   fof_t <- .bijcheck(fullgroup, mock_grefs, groupcut = 2)
-  score <- (fof_t$summary['bij'] * mock_t$summary['bij']) * (fof_t$summary['int'] * mock_t$summary['int'])
+  score <- (fof_t$summary['bij'] * mock_t$summary['bij']) *
+    (fof_t$summary['int'] * mock_t$summary['int'])
 
   mock_t <- .bijcheck(mock_grefs, fullgroup, groupcut = 3)
   fof_t <- .bijcheck(fullgroup, mock_grefs, groupcut = 3)
-  score_3 <- (fof_t$summary['bij'] * mock_t$summary['bij']) * (fof_t$summary['int'] * mock_t$summary['int'])
+  score_3 <- (fof_t$summary['bij'] * mock_t$summary['bij']) *
+    (fof_t$summary['int'] * mock_t$summary['int'])
   end.now <- Sys.time()
   print(end.now - start.now)
   ###
@@ -55,6 +77,9 @@ test_that("score is the same as the old code", {
   print(end.now - start.now)
 
   expect_equal(score_me, as.numeric(score), tolerance = 1e-3)
-  expect_equal(red_cat$compare_to_mock(3), as.numeric(score_3), tolerance = 1e-3)
-
+  expect_equal(
+    red_cat$compare_to_mock(3),
+    as.numeric(score_3),
+    tolerance = 1e-3
+  )
 })

@@ -180,7 +180,7 @@ validate_array <- function(arr_value) {
 }
 
 validate <- function(value, type) {
-  type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0", "vel_err"))
+  type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0", "vel_err", "angle"))
   switch (type,
     ra = {
       if (any(value < 0 | value > 360, na.rm = TRUE)) {
@@ -190,6 +190,11 @@ validate <- function(value, type) {
     dec = {
       if (any(value < -90 | value > 90, na.rm = TRUE)) {
         stop("Dec Values must be between -90 and 90 degrees.")
+      }
+    },
+    angle = {
+      if (any(value < 0 | value > 360, na.rm=TRUE)) {
+        stop("Angle must be in degrees between 0 and 360.")
       }
     },
     redshift = {
@@ -227,4 +232,67 @@ validate <- function(value, type) {
       }
     }
   )
+}
+
+#' Calculating the completeness of a survey.
+#'
+#' @description
+#' `calculate completeness` uses the positions of the galaxies that were observed out of the full
+#' target list and evaluates the completeness at given positions within some given area.
+#'
+#' @details
+#' The completeness of a survey can be evaluated at any given (RA, Dec) position if the catalog of
+#' galaxies that were planned to be observed (the target catalog) and the actual final observed 
+#' catalog of galaxies (the observed catalog). This function simply takes the positions that need
+#' to be evaluated and counts the number of galaxies in the observed and target catalogs within some
+#' given angular radius., The completeness is simply the ratio of these two counts, resulting in a 
+#' number between 0-1. This can then be used by Nessie to adjust the linking lengths in areas of 
+#' lower completeness.
+#'
+#' @param ra_observed The Right Ascension of the galaxies that were observed, in degrees.
+#' @param dec_observed The Declination of the galaxies in degrees that were observed, in degrees.
+#' @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
+#' @param dec_target The Declination of the galaxies that were targeted for observation in degress.
+#' @param ra_evaulate The Right Ascension to be evaluated for completeness in degrees.
+#' @param dec_evaluate The Declination to be evaluated for completeness in degrees.
+#' @param search_radii The angular area for each eval point to search for members in degrees.
+#' @return An array equal to the length of the eval ra and decs with every element between 0-1.
+#' @export
+calculate_completeness <- function(ra_observed, dec_observed, ra_target, dec_target, ra_eval, dec_eval, search_radii) {
+  
+  # Lots of validation
+  all_ra_arrays <- c(ra_observed, ra_target, ra_eval)
+  all_dec_arrays <- c(dec_observed, dec_target, dec_eval)
+
+  validate_array(search_radii)
+  validate(search_radii, "angle")
+  for (ra_array in all_ra_arrays) {
+    validate(ra_array, "ra")
+    validate_array(ra_array)
+  }
+  for (dec_array in all_dec_arrays) {
+    validate(dec_array, "dec")
+    validate_array(dec_array)
+  }
+
+
+  if (length(ra_observed) != length(dec_observed)) {
+    stop("RA and Dec observed arrays are of different lengths")
+  }
+
+  if (length(ra_target) != length(dec_target)) {
+    stop("RA and Dec target arrays are of different lengths")
+  }
+
+  if (length(ra_eval) != length(dec_eval)) {
+    stop("RA and Dec eval arrays are of different lengths")
+  }
+
+  if (length(search_radii) != length(ra_eval)) {
+    stop("search_radii and eval arrays must have the same dimensions.")
+  }
+
+  # The actual calculation
+  calc_completeness_rust(ra_observed, dec_observed, ra_target, dec_target, ra_eval, dec_eval, search_radii)
+
 }

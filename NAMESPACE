@@ -2,6 +2,8 @@
 
 export(FlatCosmology)
 export(RedshiftCatalog)
+export(calc_completeness_rust)
+export(calculate_completeness)
 export(calculate_harmonic_mean)
 export(calculate_max_rvirs)
 export(calculate_max_sigmas)
