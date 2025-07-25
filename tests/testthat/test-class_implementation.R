@@ -6,7 +6,6 @@ test_that("it runs", {
   absolute_magnitudes <- c(-18., -18., -18)
 
   cosmo <- FlatCosmology$new(h = 0.7, omega_m = 0.3)
-  completeness <- rep(0.98, length(ra_array))
   density_function <- function(z) {
     rep(0.2, length(z))
   }
@@ -15,9 +14,9 @@ test_that("it runs", {
     dec_array,
     redshift_array,
     density_function,
-    cosmo,
-    completeness
+    cosmo
   )
+  cat$set_completeness()
   group <- cat$get_raw_groups(0.06, 18)
   cat$run_fof(0.06, 18)
   group_catalog <- cat$calculate_group_table(
@@ -33,7 +32,7 @@ test_that("it runs", {
   expect_equal(group_catalog$multiplicity, 2)
 })
 
-test_that("completeness is automatically set", {
+test_that("completeness can be set", {
   ra_array <- c(120., 120., 50.)
   dec_array <- c(-34., -34., 23.)
   redshift_array <- c(0.2, 0.2, 0.6)
@@ -48,7 +47,38 @@ test_that("completeness is automatically set", {
     density_function,
     cosmo
   )
+  cat$set_completeness()
   expect_equal(cat$completeness, rep(1, length(ra_array)))
+
+  cat$set_completeness(rep(0.96, length(cat$ra_array)))
+  expect_equal(cat$completeness, rep(0.96, length(ra_array)))
+})
+
+test_that("completeness can be calculated", {
+  ra_array <- c(10., 20.)
+  dec_array <- c(10., 20.)
+  ra_target <- c(10, 20, 30)
+  dec_target <- c(10, 20, 30)
+  radii <- c(0.1, 0.1)
+  redshift_array <- c(0.2, 0.2)
+  cosmo <- FlatCosmology$new(h = 0.7, omega_m = 0.3)
+  density_function <- function(z) {
+    rep(0.2, length(z))
+  }
+  cat <- RedshiftCatalog$new(
+    ra_array,
+    dec_array,
+    redshift_array,
+    density_function,
+    cosmo
+  )
+  cat$calculate_completeness(ra_target, dec_target, radii)
+  expect_equal(cat$completeness, c(1, 1))
+
+  cat$ra_array <- c(10.)
+  cat$dec_array <- c(10.)
+  cat$calculate_completeness(c(10., 10.), c(10., 10.), c(0.1))
+  expect_equal(cat$completeness, c(0.5))
 })
 
 
@@ -76,6 +106,7 @@ test_that("getting group ids works on simple case", {
     density_function = rho_mean,
     cosmology = cosmo
   )
+  cat$set_completeness()
   cat$run_fof(b0, r0)
 
   ans <- c(1, 1, 1, 2, 2, 2, 3, 3, -1, -1)
@@ -93,6 +124,7 @@ test_that("comparison to mocks is working", {
     1
   }
   cat <- RedshiftCatalog$new(ras, decs, redshifts, rho_mean, cosmo)
+  cat$set_completeness()
   cat$group_ids <- group_ids
   cat$mock_group_ids <- mock_group_ids
   metrics <- cat$compare_to_mock()

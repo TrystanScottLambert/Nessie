@@ -378,8 +378,6 @@ fn calculate_harmonic_mean(values: Vec<f64>) -> f64 {
 /// @param dec_observed The Declination of the galaxies in degrees that were observed, in degrees.
 /// @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
 /// @param dec_target The Declination of the galaxies that were targeted for observation in degress.
-/// @param ra_evaulate The Right Ascension to be evaluated for completeness in degrees.
-/// @param dec_evaluate The Declination to be evaluated for completeness in degrees.
 /// @param angular_radius The search area for each galaxy in degress.
 /// @return An array of elements between 0-1.
 /// @export
@@ -389,8 +387,6 @@ fn calc_completeness_rust(
     dec_observed: Vec<f64>,
     ra_target: Vec<f64>,
     dec_target: Vec<f64>,
-    ra_evaluate: Vec<f64>,
-    dec_evaluate: Vec<f64>,
     angular_radius: Vec<f64>,
 ) -> Vec<f64> {
     let observed_catalog = PositionCatalog {
@@ -401,14 +397,9 @@ fn calc_completeness_rust(
         ra_deg: ra_target,
         dec_deg: dec_target,
     };
-    let evaluate_catalog = PositionCatalog {
-        ra_deg: ra_evaluate,
-        dec_deg: dec_evaluate,
-    };
     calculate_completeness(
         observed_catalog,
         target_catalog,
-        evaluate_catalog,
         angular_radius,
     )
 }

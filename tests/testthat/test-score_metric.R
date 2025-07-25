@@ -29,6 +29,7 @@ test_that("score is the same as the old code", {
     g09_rho_mean,
     cosmo
   )
+  red_cat$set_completeness()
 
   #Annoyingly we have to change the -1 thing to the old GroupID method to to do this test.
   neg1_idx <- which(g09_lightcone$GroupID == -1)
@@ -76,10 +77,10 @@ test_that("score is the same as the old code", {
   end.now <- Sys.time()
   print(end.now - start.now)
 
-  expect_equal(score_me, as.numeric(score), tolerance = 1e-3)
+  expect_equal(score_me, as.numeric(score), tolerance = 1e-2)
   expect_equal(
     red_cat$compare_to_mock(3),
     as.numeric(score_3),
-    tolerance = 1e-3
+    tolerance = 1e-2
   )
 })

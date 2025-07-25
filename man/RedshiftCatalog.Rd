@@ -39,6 +39,8 @@ using a Friends-of-Friends (FoF) algorithm with redshift-dependent linking lengt
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-RedshiftCatalog-new}{\code{RedshiftCatalog$new()}}
+\item \href{#method-RedshiftCatalog-calculate_completeness}{\code{RedshiftCatalog$calculate_completeness()}}
+\item \href{#method-RedshiftCatalog-set_completeness}{\code{RedshiftCatalog$set_completeness()}}
 \item \href{#method-RedshiftCatalog-get_raw_groups}{\code{RedshiftCatalog$get_raw_groups()}}
 \item \href{#method-RedshiftCatalog-run_fof}{\code{RedshiftCatalog$run_fof()}}
 \item \href{#method-RedshiftCatalog-calculate_group_table}{\code{RedshiftCatalog$calculate_group_table()}}
@@ -58,8 +60,7 @@ Create a new RedshiftCatalog object.
   dec_array,
   redshift_array,
   density_function,
-  cosmology,
-  completeness = NULL
+  cosmology
 )}\if{html}{\out{</div>}}
 }
 
@@ -75,8 +76,59 @@ Create a new RedshiftCatalog object.
 \item{\code{density_function}}{A function that takes redshifts and returns galaxy density.}
 
 \item{\code{cosmology}}{A FlatCosmology object (created using the FlatCosmology class).}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RedshiftCatalog-calculate_completeness"></a>}}
+\if{latex}{\out{\hypertarget{method-RedshiftCatalog-calculate_completeness}{}}}
+\subsection{Method \code{calculate_completeness()}}{
+\code{calculate_completeness} method uses the positions of the galaxies that were observed and the full
+target list to evaluate the completeness for every galaxy in the redshift catalog.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$calculate_completeness(ra_target, dec_target, radii)}\if{html}{\out{</div>}}
+}
 
-\item{\code{completeness}}{An optional numeric vector of completeness weights (default: 1 for all galaxies).}
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ra_target}}{The Right Ascension of the galaxies that were targeted for observation in degrees.}
+
+\item{\code{dec_target}}{The Declination of the galaxies that were targeted for observation in degress.}
+
+\item{\code{radii}}{The angular area for each eval point to search for members in degrees.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+The completeness of a survey can be evaluated at any given (RA, Dec) position if the catalog of
+galaxies that were planned to be observed (the target catalog) and the actual final observed
+catalog of galaxies (the observed catalog). This method counts the number of galaxies in the
+observed and target catalogs within some given angular radius. The completeness is the ratio
+of these two counts, resulting in a number between 0-1. This is then used by Nessie to
+adjust the linking lengths in areas of lower completeness.
+
+If no catalog is passed then 100\% completeness is assumed.
+}
+
+\subsection{Returns}{
+An array equal to the length of the eval ra and decs with every element between 0-1.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-RedshiftCatalog-set_completeness"></a>}}
+\if{latex}{\out{\hypertarget{method-RedshiftCatalog-set_completeness}{}}}
+\subsection{Method \code{set_completeness()}}{
+\code{set_completeness} will just set the completeness array as the completeness to use
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{RedshiftCatalog$set_completeness(completeness = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{completeness}}{An optional numeric vector of completeness weights.}
 }
 \if{html}{\out{</div>}}
 }

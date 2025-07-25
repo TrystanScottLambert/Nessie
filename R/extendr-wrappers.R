@@ -137,12 +137,10 @@ create_pair_catalog <- function(ra, dec, redshift, absolute_magnitudes, group_id
 #' @param dec_observed The Declination of the galaxies in degrees that were observed, in degrees.
 #' @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
 #' @param dec_target The Declination of the galaxies that were targeted for observation in degress.
-#' @param ra_evaulate The Right Ascension to be evaluated for completeness in degrees.
-#' @param dec_evaluate The Declination to be evaluated for completeness in degrees.
 #' @param angular_radius The search area for each galaxy in degress.
 #' @return An array of elements between 0-1.
 #' @export
-calc_completeness_rust <- function(ra_observed, dec_observed, ra_target, dec_target, ra_evaluate, dec_evaluate, angular_radius) .Call(wrap__calc_completeness_rust, ra_observed, dec_observed, ra_target, dec_target, ra_evaluate, dec_evaluate, angular_radius)
+calc_completeness_rust <- function(ra_observed, dec_observed, ra_target, dec_target, angular_radius) .Call(wrap__calc_completeness_rust, ra_observed, dec_observed, ra_target, dec_target, angular_radius)
 
 
 # nolint end

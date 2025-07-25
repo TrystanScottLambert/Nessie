@@ -9,8 +9,6 @@ calc_completeness_rust(
   dec_observed,
   ra_target,
   dec_target,
-  ra_evaluate,
-  dec_evaluate,
   angular_radius
 )
 }
@@ -23,11 +21,7 @@ calc_completeness_rust(
 
 \item{dec_target}{The Declination of the galaxies that were targeted for observation in degress.}
 
-\item{dec_evaluate}{The Declination to be evaluated for completeness in degrees.}
-
 \item{angular_radius}{The search area for each galaxy in degress.}
-
-\item{ra_evaulate}{The Right Ascension to be evaluated for completeness in degrees.}
 }
 \value{
 An array of elements between 0-1.

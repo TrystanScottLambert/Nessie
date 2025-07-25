@@ -38,29 +38,79 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #' @param redshift_array A numeric vector of redshifts.
     #' @param density_function A function that takes redshifts and returns galaxy density.
     #' @param cosmology A FlatCosmology object (created using the FlatCosmology class).
-    #' @param completeness An optional numeric vector of completeness weights (default: 1 for all galaxies).
     initialize = function(
-      ra_array, dec_array, redshift_array, density_function, cosmology, completeness=NULL
+      ra_array, dec_array, redshift_array, density_function, cosmology
       ) {
       self$ra_array <- ra_array
       self$dec_array <- dec_array
       self$redshift_array <- redshift_array
       self$density_function <- density_function
       self$cosmology <- cosmology
-      if (is.null(completeness)) {
-        self$completeness <- rep(1, length(self$ra_array))
-      } else {
-        self$completeness <- completeness
-      }
+
       validate(self$ra_array, "ra")
       validate(self$dec_array, "dec")
       validate(self$redshift_array, "redshift")
-      validate(self$completeness, "completeness")
 
       validate_array(self$ra_array)
       validate_array(self$dec_array)
       validate_array(self$redshift_array)
-      validate_array(self$completeness)
+
+      if (length(self$ra_array) != length(self$dec_array)) {
+        stop("RA and Dec must be of same length.")
+      }
+      if (length(self$ra_array) != length(self$redshift_array)) {
+        stop("redshift array needs to be the same length as RA and Dec")
+      }
+    },
+
+    #' @description
+    #' `calculate_completeness` method uses the positions of the galaxies that were observed and the full
+    #' target list to evaluate the completeness for every galaxy in the redshift catalog.
+    #'
+    #' @details
+    #' The completeness of a survey can be evaluated at any given (RA, Dec) position if the catalog of
+    #' galaxies that were planned to be observed (the target catalog) and the actual final observed 
+    #' catalog of galaxies (the observed catalog). This method counts the number of galaxies in the
+    #' observed and target catalogs within some given angular radius. The completeness is the ratio 
+    #' of these two counts, resulting in a number between 0-1. This is then used by Nessie to 
+    #' adjust the linking lengths in areas of lower completeness.
+    #' 
+    #' If no catalog is passed then 100% completeness is assumed.
+    #'
+    #' @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
+    #' @param dec_target The Declination of the galaxies that were targeted for observation in degress.
+    #' @param radii The angular area for each eval point to search for members in degrees.
+    #' @return An array equal to the length of the eval ra and decs with every element between 0-1.
+    calculate_completeness = function(ra_target, dec_target, radii) {
+      validate(ra_target, "ra")
+      validate(dec_target, "dec")
+      validate_array(ra_target)
+      validate_array(dec_target)
+
+      if (length(ra_target) != length(dec_target)) {
+        stop("ra_target and dec_target must be the same size.")
+      }
+      if(length(radii) != length(self$ra_array)) {
+        stop("radii must be the same length as the ra of the data.")
+      }
+      if (length(ra_target) < length(self$ra_array)) {
+        stop("The target array is smaller than the observed array. This could lead to >100% completeness!")
+      }
+
+      self$completeness <- calc_completeness_rust(self$ra_array, self$dec_array, ra_target, dec_target, radii)
+    },
+
+    #' @description
+    #' `set_completeness` will just set the completeness array as the completeness to use
+    #'
+    #' @param completeness An optional numeric vector of completeness weights.
+    set_completeness = function(completeness = NULL) {
+     
+      if (is.null(completeness)) {
+        completeness <- rep(1., length(self$ra_array))
+      }
+      validate(completeness, "completeness")
+      self$completeness <- completeness
     },
 
 
@@ -109,6 +159,11 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       validate(r0, 'r0')
       validate_scalar(r0)
       validate_scalar(b0)
+
+      if (is.null(self$completeness)) {
+        stop("The completeness has not been set. Either run the set_completeness method or calculate_completeness method.")
+      }
+
       group_links <- self$get_raw_groups(b0, r0, max_stellar_mass)
       all_ids <- seq(length(self$ra_array)) # positions of all galaxies
       singleton_galaxies <- setdiff(all_ids, group_links$galaxy_id)
@@ -132,6 +187,9 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       validate_array(velocity_errors)
       if (is.null(self$group_ids)) {
         stop("No group ids found. Be sure to run the `run_fof` method before calling `calculate_group_table`")
+      }
+      if (is.null(self$completeness)) {
+        stop("The completeness has not been set. Either run the set_completeness method or calculate_completeness method.")
       }
       as.data.frame(create_group_catalog(
         self$ra_array, self$dec_array, self$redshift_array, absolute_magnitudes, velocity_errors,
