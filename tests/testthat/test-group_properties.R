@@ -7,7 +7,7 @@ test_that("comparing to the old code.", {
   df_data <- df_data[df_data$Z < 0.5, ]
   df_data <- df_data[df_data$Rpetro < 19.8, ]
   velocity_errors <- rep(50., length(df_data$RA))
-  cosmo <- FlatCosmology$new(h = 1., omega_m = 0.3)
+  cosmo <- FlatCosmology$new(h = 1., omega_m = 0.25)
 
   randoms <- as.data.frame(read.csv(infile_randoms))
   random_z <- randoms$z
@@ -35,5 +35,4 @@ test_that("comparing to the old code.", {
   expect_equal(result$r50, df_master$Rad50, tolerance = 1e-4) # Radii are completely wrong.
   expect_equal(result$r100, df_master$Rad100, tolerance = 1e-4)  # Radii are completely wrong.
   expect_equal(result$rsigma, df_master$Rad1Sig, tolerance = 1e-4)  # Radii are completely wrong.
-
 })

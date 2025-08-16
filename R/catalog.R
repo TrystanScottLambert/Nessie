@@ -90,7 +90,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
       if (length(ra_target) != length(dec_target)) {
         stop("ra_target and dec_target must be the same size.")
       }
-      if(length(radii) != length(self$ra_array)) {
+      if (length(radii) != length(self$ra_array)) {
         stop("radii must be the same length as the ra of the data.")
       }
       if (length(ra_target) < length(self$ra_array)) {
