@@ -95,7 +95,7 @@ red_cat <- RedshiftCatalog$new(data$ra, data$dec, data$zobs, running_density, co
 
 #### Completeness
 
-It is possible to account for completeness by passing an array of values between 0 and 1 and using the setter method availble in the `RedshiftCatalog` object. A value of 1 indicates that a galaxy lies in a fully complete region, 0 indicates a completely incomplete region, and 0.5 would mean the region is 50% complete. The definition of this completeness array is left to the user
+It is possible to account for completeness by passing an array of values between 0 and 1 and using the setter method available in the `RedshiftCatalog` object. A value of 1 indicates that a galaxy lies in a fully complete region, 0 indicates a completely incomplete region, and 0.5 would mean the region is 50% complete. The definition of this completeness array is left to the user
 ```r
 completeness <- rep(0.98, length(data$ra))
 red_cat$set_completeness(completeness)
@@ -164,7 +164,7 @@ group_catalog_df <- red_cat$calculate_group_table(data$abs_mags)
 ```
 
 ### Pair Catalog
-Besides a Group catalog, a Pair catalog consiting of properties of galaxy-pairs can also be calculated.
+Besides a Group catalog, a Pair catalog consisting of properties of galaxy-pairs can also be calculated.
 ```python
 pair_catalog_dict = red_cat.calculate_pair_table()
 ```
@@ -210,7 +210,7 @@ best_fit_params <- results$parm
 
 #### Tuning on Multiple Lightcones
 
-The reason that the function requires a list of RedshiftCatalog objects, instead of expecting only a single RedshiftCatalog object, is because often multiple lightcones are built to account for cosmic variance. Each individual lightcone can become its own object and their scores will be combined together in the final calculation.
+The reason that the function requires a list of RedshiftCatalog objects, instead of expecting only a single RedshiftCatalog object, is because often multiple lightcones are built to account for cosmic variance. Each individual lightcone can become its own object and their scores will be combined in the final calculation.
 
 For example, if we had a redshift survey that had two fields (North and South) that both covered 0.0001 of the sky, we might make 10 mock catalogues with a "Field" column containing either 'N' for North or 'S' for South and a "CatNum" representing the catalog number (1-10). So CatNum = 5 and Field = 'N' would be the North field in mock catalog 5.
 
@@ -256,7 +256,7 @@ best_fit_params <- results$parm
 
 ```
 
-Tuning can be slow, but since Nessie is already very highly multi-threaded, there should be no need to try and parallelize further. Furthermore, Nessie should scale with the number of cores, which means it will use the maximum number of cores available on HPC environments.
+Tuning can be slow, but since Nessie is already very highly multithreaded, there should be no need to try and parallelize further. Furthermore, Nessie should scale with the number of cores, which means it will use the maximum number of cores available on HPC environments.
 
 
 ## Contributing

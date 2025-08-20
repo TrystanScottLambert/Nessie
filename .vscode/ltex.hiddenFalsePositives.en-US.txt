@@ -1,0 +1,5 @@
+{"rule":"ENGLISH_WORD_REPEAT_RULE","sentence":"^\\QNessie\nNessie\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QIf not, please see the top of the CRAN web page or follow the guide here.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QThe rustlang site should detect your operating system and tell you what command to use to install Rust using \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q.\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qin the terminal.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QThis would result in a dataframe with R.A., Dec., redshift, and group_id where -1 is chosen to mean that that galaxy was not found in any group.\\E$"}
