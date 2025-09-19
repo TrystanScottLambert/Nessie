@@ -22,11 +22,10 @@ library(Highlander)
 #'
 #' @return running_density A function which is the rho(z).
 #' @export
-create_density_function <- function(redshifts, total_counts, survey_fractional_area, cosmology, binwidth=40, N = 1e4) {
-
+create_density_function <- function(redshifts, total_counts, survey_fractional_area, cosmology, binwidth = 40, N = 1e4) {
   comoving_distances <- cosmology$comoving_distance(redshifts)
-  max_comoving <- max(comoving_distances) + 2*binwidth # allowing a 2 binwidth grace
-  #TODO: Remove this shit when before release
+  max_comoving <- max(comoving_distances) + 2 * binwidth # allowing a 2 binwidth grace
+  # TODO: Remove this shit when before release
   max_comoving <- 2000
   kde <- density(comoving_distances, bw = binwidth / sqrt(12), from = 0, to = max_comoving, n = N, kern = "rect")
   kde_func <- approxfun(kde$x, kde$y, rule = 2)
@@ -40,7 +39,7 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
   upper_volumes <- (4 / 3) * pi * (comoving_bins + binwidth / 2)^3
   lower_volumes <- (4 / 3) * pi * (comoving_bins - binwidth / 2)^3
   running_volume <- survey_fractional_area * (upper_volumes - lower_volumes)
-  running_density_z <- approxfun(cosmology$z_at_comoving_dist(kde$x), (total_counts * running_integral)/running_volume, rule = 2)
+  running_density_z <- approxfun(cosmology$z_at_comoving_dist(kde$x), (total_counts * running_integral) / running_volume, rule = 2)
   return(running_density_z)
 }
 
@@ -52,7 +51,7 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
 #' @param singleton_ids the integer id value that is assigned to all singleton galaxies.
 #' @returns a list containing all the values from equations 9 - 15 in Robotham+2011
 #' @export
-calculate_s_total <- function(measured_ids, group_ids, min_group_size=2) {
+calculate_s_total <- function(measured_ids, group_ids, min_group_size = 2) {
   return(calculate_s_score(as.integer(measured_ids), as.integer(group_ids), as.integer(min_group_size)))
 }
 
@@ -92,10 +91,9 @@ tune_group_finder <- function(
     n_iterations = c(100, 100),
     nfinal_mcmc = 2500,
     scaling = c(1, 1)) {
-
   optimal_function <- function(par, redshift_catalogues) {
-    b0 <- par[1]/scaling[1]
-    r0 <- par[2]/scaling[2]
+    b0 <- par[1] / scaling[1]
+    r0 <- par[2] / scaling[2]
     message(cat(par))
     s_totals <- list()
 
@@ -111,14 +109,13 @@ tune_group_finder <- function(
       s_total <- redshift_catalogue$compare_to_mock(min_group_size = minimum_group_size)
 
       s_totals[[length(s_totals) + 1]] <- s_total
-
     }
     FoM <- calculate_harmonic_mean(unlist(s_totals))
     if (is.nan(FoM)) {
       FoM <- 0
     }
-    message('LP: ', FoM)
-    message('-----------------')
+    message("LP: ", FoM)
+    message("-----------------")
     return(FoM)
   }
 
@@ -137,7 +134,6 @@ tune_group_finder <- function(
   )
 
   return(opt_gama)
-
 }
 
 
@@ -181,7 +177,7 @@ validate_array <- function(arr_value) {
 
 validate <- function(value, type) {
   type <- match.arg(type, choices = c("ra", "dec", "redshift", "absolute_mag", "completeness", "b0", "r0", "vel_err", "angle"))
-  switch (type,
+  switch(type,
     ra = {
       if (any(value < 0 | value > 360, na.rm = TRUE)) {
         stop("RA values must be between 0 and 360 degrees.")
@@ -193,7 +189,7 @@ validate <- function(value, type) {
       }
     },
     angle = {
-      if (any(value < 0 | value > 360, na.rm=TRUE)) {
+      if (any(value < 0 | value > 360, na.rm = TRUE)) {
         stop("Angle must be in degrees between 0 and 360.")
       }
     },
@@ -232,4 +228,13 @@ validate <- function(value, type) {
       }
     }
   )
+}
+
+remap_ids <- function(id_array) {
+  id_array_chr <- as.character(id_array)
+  unique_vals <- unique(id_array_chr)
+  unique_vals <- unique_vals[unique_vals != "-1"]
+  mapping <- setNames(seq_along(unique_vals), unique_vals)
+  mapping["-1"] <- -1
+  as.integer(unname(mapping[id_array_chr]))
 }

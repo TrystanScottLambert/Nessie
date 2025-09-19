@@ -69,12 +69,12 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #'
     #' @details
     #' The completeness of a survey can be evaluated at any given (RA, Dec) position if the catalog of
-    #' galaxies that were planned to be observed (the target catalog) and the actual final observed 
+    #' galaxies that were planned to be observed (the target catalog) and the actual final observed
     #' catalog of galaxies (the observed catalog). This method counts the number of galaxies in the
-    #' observed and target catalogs within some given angular radius. The completeness is the ratio 
-    #' of these two counts, resulting in a number between 0-1. This is then used by Nessie to 
+    #' observed and target catalogs within some given angular radius. The completeness is the ratio
+    #' of these two counts, resulting in a number between 0-1. This is then used by Nessie to
     #' adjust the linking lengths in areas of lower completeness.
-    #' 
+    #'
     #' If no catalog is passed then 100% completeness is assumed.
     #'
     #' @param ra_target The Right Ascension of the galaxies that were targeted for observation in degrees.
@@ -105,7 +105,7 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
     #'
     #' @param completeness An optional numeric vector of completeness weights.
     set_completeness = function(completeness = NULL) {
-     
+
       if (is.null(completeness)) {
         completeness <- rep(1., length(self$ra_array))
       }
@@ -227,9 +227,13 @@ RedshiftCatalog <- R6::R6Class("RedshiftCatalog",
 
       if (is.null(self$mock_group_ids)) {
         stop("No mock group ids found. Be sure to set the comparison mock group id with `$mock_group_ids = ` ")
+      } else if  (!(-1 %in% self$mock_group_ids)) {
+        warning("No mock-groups found with -1 id. Are these set properly?")
       }
 
-      return(calculate_s_total(self$group_ids, self$mock_group_ids, min_group_size))
+      safe_mock_ids <- remap_ids(self$mock_group_ids)
+
+      return(calculate_s_total(self$group_ids, safe_mock_ids, min_group_size))
     }
   )
 )

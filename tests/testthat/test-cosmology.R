@@ -4,9 +4,9 @@ test_that("sigma matches celestial", {
   redshift <- 0.8
   mass_solar <- 1e15
 
-  result = calculate_max_sigmas(mass_solar, redshift, cosmo$omega_m, cosmo$omega_k, cosmo$omega_lambda, cosmo$hubble_constant)
-  #expected = celestial::coshaloMvirToSigma(mass_solar, z = redshift, Rho = "crit", H0 = cosmo$hubble_constant, OmegaM = cosmo$omega_m)
-  expected = 1969.705 # This is handling the fact that celestial has two different constants defined for Solar mass in KG/s
+  result <- calculate_max_sigmas(mass_solar, redshift, cosmo$omega_m, cosmo$omega_k, cosmo$omega_lambda, cosmo$hubble_constant)
+  # expected = celestial::coshaloMvirToSigma(mass_solar, z = redshift, Rho = "crit", H0 = cosmo$hubble_constant, OmegaM = cosmo$omega_m)
+  expected <- 1969.705 # This is handling the fact that celestial has two different constants defined for Solar mass in KG/s
   expect_equal(result, expected, tolerance = 1e-3)
 })
 
@@ -16,8 +16,8 @@ test_that("rvir matches celestial", {
   redshift <- 0.8
   mass_solar <- 1e15
 
-  result = calculate_max_rvirs(mass_solar, redshift, cosmo$omega_m, cosmo$omega_k, cosmo$omega_lambda, cosmo$hubble_constant)
-  expected = celestial::coshaloMvirToRvir(mass_solar, z = redshift, Rho = "crit", H0 = cosmo$hubble_constant, OmegaM = cosmo$omega_m)
+  result <- calculate_max_rvirs(mass_solar, redshift, cosmo$omega_m, cosmo$omega_k, cosmo$omega_lambda, cosmo$hubble_constant)
+  expected <- celestial::coshaloMvirToRvir(mass_solar, z = redshift, Rho = "crit", H0 = cosmo$hubble_constant, OmegaM = cosmo$omega_m)
   expect_equal(result, expected)
 })
 

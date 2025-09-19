@@ -13,9 +13,9 @@
 #' @param links A named list with i and j. These links are made using the `fof_links` function.
 #' @return A dataframe with galaxy ids in one column and group id in another.
 #'
-.group_graph <-  function(links){
-  group = igraph::components(igraph::graph_from_data_frame(links, directed = FALSE))
-  group = data.frame(galaxy_id = as.integer(names(group$membership)), group_id = group$membership)
+.group_graph <- function(links) {
+  group <- igraph::components(igraph::graph_from_data_frame(links, directed = FALSE))
+  group <- data.frame(galaxy_id = as.integer(names(group$membership)), group_id = group$membership)
   return(group)
 }
 
@@ -39,14 +39,13 @@
 #' @return Data Frame of the galaxy ids and which groups they are in.
 #'
 .find_groups <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) {
-  links <- fof_links_fast(ra_array, dec_array, comoving_distances,  linking_lengths_pos, linking_lengths_los)
+  links <- fof_links_fast(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
   group <- .group_graph(links)
   return(group)
 }
 
 .find_groups_classic <- function(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los) {
-  links <- fof_links_aaron(ra_array, dec_array, comoving_distances,  linking_lengths_pos, linking_lengths_los)
+  links <- fof_links_aaron(ra_array, dec_array, comoving_distances, linking_lengths_pos, linking_lengths_los)
   group <- .group_graph(links)
   return(group)
 }
-
