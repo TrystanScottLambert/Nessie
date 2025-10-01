@@ -1,5 +1,28 @@
 library(Highlander)
 
+
+#' Creating randoms catalogue to model the n(z) without underlying large-scale structure
+#' @description
+#' `gen_random_redshifts` creates a randoms catalogue following the Farrow+2015 method. These random
+#' redshifts accuratly model the n(z) distribution without the underylying large-scale structure.
+#' These can then be saved or used with the `create_density_function` to build the density function
+#' needed for the group finder.
+#'
+#' @param redshifts Redshifts from the survey.
+#' @param mags Magnitudes from the survey.
+#' @param z_lim The maximum z over which to confine all calculations.
+#' @param maglim The magnitude limit of the survey.
+#' @param n_clone The number of times more the randoms catalogue should be
+#' @param iterations The number of iterations to iteratively iterate. (5-10 should be plenty)
+#' @param cosmology A FlatCosmology object (created using the FlatCosmology class).
+#'
+#' @return An array of redshift values roughly n_clone times as many as the catalogue.
+#' @export
+gen_random_redshifts <- function(redshifts, mags, z_lim, maglim, n_clone, iterations, cosmo) {
+  gen_randoms(redshifts, mags, z_lim, maglim, n_clone, iterations, cosmo$omega_m, cosmo$omega_k, cosmo$omega_lambda, cosmo$hubble_constant)
+}
+
+
 #' Running density function estimation
 #'
 #' @description
@@ -14,7 +37,7 @@ library(Highlander)
 #' in a bin multipled by the PDF and divided by the running volume.
 #'
 #' @param redshifts An array of redshift values.
-#' @param total_counts The total counts of the redshift redshift survey. Doesn't make sense.
+#' @param total_counts The total counts of the redshift survey.
 #' @param survey_fractional_area The fraction of the survey over a full 4pi steradian area.
 #' @param cosmology A FlatCosmology object (created using the FlatCosmology class).
 #' @param binwidth The binwidth (in comoving distance) which will be used for the integration
@@ -25,8 +48,6 @@ library(Highlander)
 create_density_function <- function(redshifts, total_counts, survey_fractional_area, cosmology, binwidth = 40, N = 1e4) {
   comoving_distances <- cosmology$comoving_distance(redshifts)
   max_comoving <- max(comoving_distances) + 2 * binwidth # allowing a 2 binwidth grace
-  # TODO: Remove this shit when before release
-  max_comoving <- 2000
   kde <- density(comoving_distances, bw = binwidth / sqrt(12), from = 0, to = max_comoving, n = N, kern = "rect")
   kde_func <- approxfun(kde$x, kde$y, rule = 2)
 
@@ -42,6 +63,8 @@ create_density_function <- function(redshifts, total_counts, survey_fractional_a
   running_density_z <- approxfun(cosmology$z_at_comoving_dist(kde$x), (total_counts * running_integral) / running_volume, rule = 2)
   return(running_density_z)
 }
+
+
 
 
 #' Comparing measured groups to mock catalogue groups

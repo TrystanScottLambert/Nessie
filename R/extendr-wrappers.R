@@ -142,5 +142,18 @@ create_pair_catalog <- function(ra, dec, redshift, absolute_magnitudes, group_id
 #' @export
 calc_completeness_rust <- function(ra_observed, dec_observed, ra_target, dec_target, angular_radius) .Call(wrap__calc_completeness_rust, ra_observed, dec_observed, ra_target, dec_target, angular_radius)
 
+#' Generates random redshifts to model the n(z) without underlying LSS.
+#' @param redshifts Redshifts from the survey.
+#' @param mags Magnitudes from the survey.
+#' @param z_lim The maximum z over which to confine all calculations.
+#' @param maglim The magnitude limit of the survey.
+#' @param n_clone The number of times more the randoms catalogue should be
+#' @param iterations The number of iterations to iteratively iterate. (5-10 should be plenty)
+#' @param omega_m Mass density (often 0.3 in LCDM).
+#' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+#' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+#' @param h0 H0 = 100 * h.
+gen_randoms <- function(redshifts, mags, z_lim, maglim, n_clone, iterations, omega_m, omega_k, omega_l, h0) .Call(wrap__gen_randoms, redshifts, mags, z_lim, maglim, n_clone, iterations, omega_m, omega_k, omega_l, h0)
+
 
 # nolint end

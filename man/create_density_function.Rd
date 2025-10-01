@@ -16,7 +16,7 @@ create_density_function(
 \arguments{
 \item{redshifts}{An array of redshift values.}
 
-\item{total_counts}{The total counts of the redshift redshift survey. Doesn't make sense.}
+\item{total_counts}{The total counts of the redshift survey.}
 
 \item{survey_fractional_area}{The fraction of the survey over a full 4pi steradian area.}
 

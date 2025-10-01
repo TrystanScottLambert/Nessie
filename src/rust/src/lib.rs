@@ -5,6 +5,7 @@ use fof::group_properties::GroupedGalaxyCatalog;
 use fof::link_finder::{ffl1, find_links};
 use fof::stats::harmonic_mean;
 use fof::Cosmology;
+use randoms::generate_randoms;
 use rayon::prelude::*;
 use std::f64;
 
@@ -28,6 +29,39 @@ fn h_at_z(redshift_array: Vec<f64>, omega_m: f64, omega_k: f64, omega_l: f64, h0
         .par_iter()
         .map(|z| cosmo.h_at_z(*z))
         .collect()
+}
+
+/// Generates random redshifts to model the n(z) without underlying LSS.
+/// @param redshifts Redshifts from the survey.
+/// @param mags Magnitudes from the survey.
+/// @param z_lim The maximum z over which to confine all calculations.
+/// @param maglim The magnitude limit of the survey.
+/// @param n_clone The number of times more the randoms catalogue should be
+/// @param iterations The number of iterations to iteratively iterate. (5-10 should be plenty)
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param h0 H0 = 100 * h.
+#[extendr]
+fn gen_randoms(
+    redshifts: Vec<f64>,
+    mags: Vec<f64>,
+    z_lim: f64,
+    maglim: f64,
+    n_clone: i32,
+    iterations: i32,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = randoms::cosmology::Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
+    generate_randoms(redshifts, mags, z_lim, maglim, n_clone, iterations, cosmo)
 }
 
 /// Calculates multiple comoving distances for multiple redshifts.
@@ -397,11 +431,7 @@ fn calc_completeness_rust(
         ra_deg: ra_target,
         dec_deg: dec_target,
     };
-    calculate_completeness(
-        observed_catalog,
-        target_catalog,
-        angular_radius,
-    )
+    calculate_completeness(observed_catalog, target_catalog, angular_radius)
 }
 
 // Macro to generate exports.
@@ -422,6 +452,7 @@ extendr_module! {
     fn calculate_harmonic_mean;
     fn create_pair_catalog;
     fn calc_completeness_rust;
+    fn gen_randoms;
 }
 
 #[cfg(test)]
