@@ -36,3 +36,13 @@ test_that("distance modulus matches celestial", {
   results <- cosmo$dist_mod(redshifts)
   expect_equal(answers, results)
 })
+
+test_that("differntial comoving volume matches astropy", {
+  cosmo <- FlatCosmology$new(0.7, 0.3)
+  redshifts <- c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 1, 2, 3, 4, 6, 10)
+  answers <- c(0.00000000e+00, 2.45332525e+08, 8.87711128e+08, 1.79758067e+09,
+               2.86528442e+09, 4.00399147e+09, 9.10690921e+09, 1.32865381e+10,
+               1.33019415e+10, 1.22199042e+10, 9.81568181e+09, 6.54566454e+09)
+  results = cosmo$differential_covol(redshifts)
+  expect_equal(results, answers, tolerance = 1e7)
+})
