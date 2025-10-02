@@ -213,6 +213,7 @@ fn distance_modulus(
 /// @param h0 H0 = 100 * h.
 /// @returns The distance modulus for the given array of redshifts.
 /// @export
+#[extendr]
 fn diff_covol(
     redshift_array: Vec<f64>,
     omega_m: f64,
