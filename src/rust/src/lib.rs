@@ -205,6 +205,33 @@ fn distance_modulus(
         .collect()
 }
 
+/// differential_comoving_volume
+/// @param redshift_array an array of multiple redshift values.
+/// @param omega_m Mass density (often 0.3 in LCDM).
+/// @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+/// @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+/// @param h0 H0 = 100 * h.
+/// @returns The distance modulus for the given array of redshifts.
+/// @export
+fn diff_covol(
+    redshift_array: Vec<f64>,
+    omega_m: f64,
+    omega_k: f64,
+    omega_l: f64,
+    h0: f64,
+) -> Vec<f64> {
+    let cosmo = Cosmology {
+        omega_m,
+        omega_k,
+        omega_l,
+        h0,
+    };
+    redshift_array
+        .par_iter()
+        .map(|&z| cosmo.differential_comoving_distance(z))
+        .collect()
+}
+
 /// finding the links between all galaxies in a brute force way.
 /// @description
 /// `fof_links_aaron` will determine all connections between galaxies in a survey and return the pairs.
@@ -453,6 +480,7 @@ extendr_module! {
     fn create_pair_catalog;
     fn calc_completeness_rust;
     fn gen_randoms;
+    fn diff_covol;
 }
 
 #[cfg(test)]
