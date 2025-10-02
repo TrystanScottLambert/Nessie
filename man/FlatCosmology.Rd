@@ -34,6 +34,7 @@ comoving distances, virial radii, velocity dispersions, and Hubble evolution.
 \item \href{#method-FlatCosmology-virial_radius}{\code{FlatCosmology$virial_radius()}}
 \item \href{#method-FlatCosmology-velocity_dispersion}{\code{FlatCosmology$velocity_dispersion()}}
 \item \href{#method-FlatCosmology-h0_grow}{\code{FlatCosmology$h0_grow()}}
+\item \href{#method-FlatCosmology-differential_covol}{\code{FlatCosmology$differential_covol()}}
 \item \href{#method-FlatCosmology-clone}{\code{FlatCosmology$clone()}}
 }
 }
@@ -178,6 +179,26 @@ Compute the redshift-dependent Hubble parameter H(z) in a flat cosmology.
 }
 \subsection{Returns}{
 A numeric vector of H(z) values (in km/s/Mpc).
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlatCosmology-differential_covol"></a>}}
+\if{latex}{\out{\hypertarget{method-FlatCosmology-differential_covol}{}}}
+\subsection{Method \code{differential_covol()}}{
+Compute the redshift-dependent Hubble parameter H(z) in a flat cosmology.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlatCosmology$differential_covol(redshift)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{redshift}}{A numeric vector of redshifts.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A numeric vector of differential comoving volume in Mpc/sr.
 }
 }
 \if{html}{\out{<hr>}}

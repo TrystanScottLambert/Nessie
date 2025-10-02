@@ -155,5 +155,15 @@ calc_completeness_rust <- function(ra_observed, dec_observed, ra_target, dec_tar
 #' @param h0 H0 = 100 * h.
 gen_randoms <- function(redshifts, mags, z_lim, maglim, n_clone, iterations, omega_m, omega_k, omega_l, h0) .Call(wrap__gen_randoms, redshifts, mags, z_lim, maglim, n_clone, iterations, omega_m, omega_k, omega_l, h0)
 
+#' differential_comoving_volume
+#' @param redshift_array an array of multiple redshift values.
+#' @param omega_m Mass density (often 0.3 in LCDM).
+#' @param omega_k Effective mass density of relativistic particles (often 0. in LCDM).
+#' @param omega_l Effective mass density of dark energy (often 0.7 in LCDM).
+#' @param h0 H0 = 100 * h.
+#' @returns The distance modulus for the given array of redshifts.
+#' @export
+diff_covol <- function(redshift_array, omega_m, omega_k, omega_l, h0) .Call(wrap__diff_covol, redshift_array, omega_m, omega_k, omega_l, h0)
+
 
 # nolint end

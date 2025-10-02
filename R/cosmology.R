@@ -84,14 +84,14 @@ FlatCosmology <- R6::R6Class("FlatCosmology",
     #' @return A numeric vector of H(z) values (in km/s/Mpc).
     h0_grow = function(redshift) {
       h_at_z(redshift, self$omega_m, self$omega_k, self$omega_lambda, self$hubble_constant)
-    }
+    },
 
     #' @description
     #' Compute the redshift-dependent Hubble parameter H(z) in a flat cosmology.
     #' @param redshift A numeric vector of redshifts.
     #' @return A numeric vector of differential comoving volume in Mpc/sr.
     differential_covol = function(redshift) {
-      diff_covol(redshift, self$omega_k, self$omega_lambda, self$hubble_constant)
+      diff_covol(redshift, self$omega_m, self$omega_k, self$omega_lambda, self$hubble_constant)
     }
 
   )
