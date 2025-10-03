@@ -1,6 +1,6 @@
 Package: Nessie
 Title: Running The Friends-of-Friends Algorithm On Redshift Surveys
-Version: 1.0.2
+Version: 1.0.3
 Authors@R: 
     person("Trystan", "Lambert", , "trystanscottlambert@gmail.com", role = c("aut", "cre"))
 Description: This packages runs the Friends-of-Friends algorithm as described in Lambert+2025 (based of the orignal code from Robotham+2011) on a given redshift survey and includes a variety of helper functions to optimize for the best linking length parameters given a mock catalogue, and construct a running density of the survey.
