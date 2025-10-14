@@ -10,5 +10,5 @@ name = 'Nessie'
 [dependencies]
 extendr-api = '*'
 fof = "0.1.13"
-randoms = "0.2.1"
+randoms = "0.2.2"
 rayon = "1.11.0"
