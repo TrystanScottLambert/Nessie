@@ -355,6 +355,7 @@ fn create_group_catalog(
         velocity_dispersion_gap_err = group_catalog.velocity_dispersion_gap_err,
         mass_proxy = group_catalog.raw_masses,
         estimated_mass = group_catalog.estimated_masses,
+        vd_corrected_mass = group_catalog.vd_corrected_mass,
         bcg_idxs = group_catalog
             .bcg_idxs
             .iter()
