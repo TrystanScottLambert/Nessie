@@ -1,10 +1,10 @@
 use extendr_api::prelude::*;
+use fof::Cosmology;
 use fof::bijectivity::s_score;
-use fof::completeness::{calculate_completeness, PositionCatalog};
+use fof::completeness::{PositionCatalog, calculate_completeness};
 use fof::group_properties::GroupedGalaxyCatalog;
 use fof::link_finder::{ffl1, find_links};
 use fof::stats::harmonic_mean;
-use fof::Cosmology;
 use randoms::generate_randoms;
 use rayon::prelude::*;
 use std::f64;
