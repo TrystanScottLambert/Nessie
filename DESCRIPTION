@@ -7,8 +7,8 @@ Description: This packages runs the Friends-of-Friends algorithm as described in
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Config/rextendr/version: 0.3.1
+RoxygenNote: 7.3.3
+Config/rextendr/version: 0.4.2
 Imports:
     R6,
 Suggests:
@@ -16,3 +16,4 @@ Suggests:
     psych,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
