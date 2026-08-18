@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "Nessie"
-version = "0.1.0"
+version = "1.1.1"
 dependencies = [
  "extendr-api",
  "fof",
@@ -610,9 +610,9 @@ dependencies = [
 
 [[package]]
 name = "ethnum"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca81e6b4777c89fd810c25a4be2b1bd93ea034fbe58e6a75216a34c6b82c539b"
+checksum = "40404c3f5f511ec4da6fe866ddf6a717c309fdbb69fbbad7b0f3edab8f2e835f"
 
 [[package]]
 name = "event-listener"
@@ -713,9 +713,9 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "fof"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85aa0848e88518af297e23c60a31bf15a89e4f0b6bef278d2fd4a108deaf88b1"
+checksum = "502e2890ef60ef23032fafb641fc26ea784edc05bca5f868d49222398b300f64"
 dependencies = [
  "csv",
  "integrate",
